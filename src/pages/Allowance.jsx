@@ -117,10 +117,7 @@ export default function Allowance() {
       <Navbar />
       <main class="max-w-3xl mx-auto px-4 py-8">
         <div class="flex items-center gap-3 mb-6">
-          <button
-            onClick={() => navigate(`/session/${params.id}`)}
-            class="text-gray-400 hover:text-white text-sm"
-          >
+          <button onClick={() => navigate(`/session/${params.id}`)} class="text-gray-400 hover:text-white text-sm">
             ← Back
           </button>
           <h1 class="text-white text-2xl font-bold">Settings</h1>
@@ -132,34 +129,19 @@ export default function Allowance() {
           <form onSubmit={saveAdUrl} class="flex flex-col gap-3">
             <div>
               <label class="block text-gray-400 text-sm mb-1">WG Gesucht ad URL</label>
-              <input
-                type="url"
-                value={adUrl()}
-                onInput={e => setAdUrl(e.target.value)}
-                placeholder="https://www.wg-gesucht.de/..."
-                class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
+              <input type="url" value={adUrl()} onInput={(e) => setAdUrl(e.target.value)} placeholder="https://www.wg-gesucht.de/..." class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
               <p class="text-gray-600 text-xs mt-1">The ad ID is extracted automatically from the URL.</p>
             </div>
             <div>
               <label class="block text-gray-400 text-sm mb-1">Scrape cutoff date</label>
-              <input
-                type="date"
-                value={cutoffDate()}
-                onInput={e => setCutoffDate(e.target.value)}
-                class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
+              <input type="date" value={cutoffDate()} onInput={(e) => setCutoffDate(e.target.value)} class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
               <p class="text-gray-600 text-xs mt-1">The extension stops scraping conversations with no messages after this date. Leave empty to scrape all.</p>
             </div>
             {adUrlError() && <p class="text-red-400 text-sm">{adUrlError()}</p>}
             {adUrlSaved() && <p class="text-green-400 text-sm">Saved!</p>}
             <div>
-              <button
-                type="submit"
-                disabled={savingAdUrl()}
-                class="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                {savingAdUrl() ? 'Saving...' : 'Save'}
+              <button type="submit" disabled={savingAdUrl()} class="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                {savingAdUrl() ? "Saving..." : "Save"}
               </button>
             </div>
           </form>
@@ -169,10 +151,7 @@ export default function Allowance() {
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
           <h2 class="text-white font-semibold mb-3">Invite Link</h2>
           <p class="text-gray-400 text-sm mb-3">Generate a link that others can use to request access to this session.</p>
-          <button
-            onClick={copyInviteLink}
-            class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-          >
+          <button onClick={copyInviteLink} class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
             Generate & Copy Invite Link
           </button>
         </div>
@@ -192,21 +171,13 @@ export default function Allowance() {
                 <div class="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3">
                   <div>
                     <p class="text-white text-sm font-medium">{req.user_email}</p>
-                    <p class="text-gray-500 text-xs">{new Date(req.requested_at).toLocaleString('de-DE')}</p>
+                    <p class="text-gray-500 text-xs">{new Date(req.requested_at).toLocaleString("de-DE")}</p>
                   </div>
                   <div class="flex gap-2">
-                    <button
-                      onClick={() => decide(req.id, 'approved')}
-                      disabled={processing() === req.id}
-                      class="bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors"
-                    >
+                    <button onClick={() => decide(req.id, "approved")} disabled={processing() === req.id} class="bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors">
                       Approve
                     </button>
-                    <button
-                      onClick={() => decide(req.id, 'rejected')}
-                      disabled={processing() === req.id}
-                      class="bg-red-800 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors"
-                    >
+                    <button onClick={() => decide(req.id, "rejected")} disabled={processing() === req.id} class="bg-red-800 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors">
                       Reject
                     </button>
                   </div>
@@ -220,22 +191,18 @@ export default function Allowance() {
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-white font-semibold">AI System Prompt</h2>
-            <button
-              onClick={saveAiPrompt}
-              disabled={savingPrompt()}
-              class="text-xs bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white px-3 py-1.5 rounded transition-colors"
-            >
-              {savingPrompt() ? 'Saving...' : promptSaved() ? 'Saved!' : 'Save Prompt'}
+            <button onClick={saveAiPrompt} disabled={savingPrompt()} class="text-xs bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white px-3 py-1.5 rounded transition-colors">
+              {savingPrompt() ? "Saving..." : promptSaved() ? "Saved!" : "Save Prompt"}
             </button>
           </div>
           <textarea
             value={aiPrompt()}
-            onInput={e => setAiPrompt(e.target.value)}
+            onInput={(e) => setAiPrompt(e.target.value)}
             rows={4}
-            class="w-full bg-gray-800 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500 resize-none font-mono"
+            class="w-full resize-y h-100 bg-gray-800 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500 resize-none font-mono"
             placeholder="e.g. Rate this WG applicant from 1 to 5 based on their messages."
           />
-          <p class="text-gray-600 text-xs mt-1">The AI receives all applicant messages and replies with a JSON rating. The JSON format instruction is added automatically.</p>
+          <p class="text-gray-600 text-xs  mt-1">The AI receives all applicant messages and replies with a JSON rating. The JSON format instruction is added automatically.</p>
           {promptError() && <p class="text-red-400 text-sm mt-2">{promptError()}</p>}
         </div>
 
@@ -250,19 +217,14 @@ export default function Allowance() {
               {(member) => (
                 <div class="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {(member.email?.[0] ?? '?').toUpperCase()}
-                    </div>
+                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-white text-xs font-bold">{(member.email?.[0] ?? "?").toUpperCase()}</div>
                     <div>
                       <p class="text-white text-sm">{member.email}</p>
                       {member.is_admin && <span class="text-yellow-500 text-xs">Admin</span>}
                     </div>
                   </div>
-                  <button
-                    onClick={() => toggleAdmin(member.user_id, member.is_admin)}
-                    class="text-xs text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded transition-colors"
-                  >
-                    {member.is_admin ? 'Remove admin' : 'Make admin'}
+                  <button onClick={() => toggleAdmin(member.user_id, member.is_admin)} class="text-xs text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded transition-colors">
+                    {member.is_admin ? "Remove admin" : "Make admin"}
                   </button>
                 </div>
               )}

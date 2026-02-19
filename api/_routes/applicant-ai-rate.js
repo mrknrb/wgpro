@@ -46,7 +46,7 @@ export default withCors(async function handler(req, res) {
 
     const messages = messagesRes.data ?? []
     const userPrompt = aiConfigRes.data?.system_prompt || 'Rate this WG applicant from 1 to 5.'
-    const systemPrompt = userPrompt + '\n\nRate this WG applicant from 1 to 5 and write a short comment based on their messages and the WG Instruction. Reply ONLY in JSON: {"rating": <1-5>, "comment": "<text>"}'
+    const systemPrompt = userPrompt + '\n\n-------Rate this WG applicant from 1 to 5 and write a short comment based on their messages and the WG Instruction. # Critical!!! Reply ONLY in JSON: {"rating": <1-5>, "comment": "<text>"}'
 
     // Build user message — show all messages as a readable transcript
     const transcript = messages.map(m =>
@@ -61,10 +61,10 @@ export default withCors(async function handler(req, res) {
     })
 
     const completion = await openai.chat.completions.create({
-      model: 'moonshotai/Kimi-K2.5',
+      model: "nvidia/Nemotron-3-Nano-30B-A3B",
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
       ],
     })
 
