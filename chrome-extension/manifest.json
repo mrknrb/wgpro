@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "WGPro",
+  "version": "1.0.0",
+  "description": "Scrape WG Gesucht messages and sync them to WGPro sessions.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://www.wg-gesucht.de/*",
+    "https://wgpro.vercel.app/*",
+    "http://localhost/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "WGPro"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.wg-gesucht.de/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
