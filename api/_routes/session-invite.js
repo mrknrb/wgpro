@@ -1,4 +1,4 @@
-import { requireUser, getSupabase, err, send, withCors } from '../../_lib/auth.js'
+import { requireUser, getSupabase, err, send, withCors } from '../_lib/auth.js'
 
 export default withCors(async function handler(req, res) {
   const { id, token } = req.query

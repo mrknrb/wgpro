@@ -1,4 +1,4 @@
-import { requireUser, err, send, withCors } from '../../_lib/auth.js'
+import { requireUser, err, send, withCors } from '../_lib/auth.js'
 
 export default withCors(async function handler(req, res) {
   const { id } = req.query

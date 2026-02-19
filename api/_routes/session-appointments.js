@@ -1,4 +1,4 @@
-import { requireUser, err, send, withCors } from '../../_lib/auth.js'
+import { requireUser, err, send, withCors } from '../_lib/auth.js'
 
 async function isMember(supabase, sessionId, userId) {
   const { data } = await supabase
