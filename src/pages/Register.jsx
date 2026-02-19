@@ -37,7 +37,7 @@ export default function Register() {
   return (
     <div class="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div class="w-full max-w-sm">
-        <h1 class="text-white text-2xl font-bold mb-6 text-center">WG Gesucht Pro</h1>
+        <h1 class="text-white text-2xl font-bold mb-6 text-center">WGPro</h1>
         <div class="bg-gray-900 rounded-xl border border-gray-700 p-6">
           <h2 class="text-white text-lg font-semibold mb-4">Create account</h2>
           <form onSubmit={handleSubmit} class="flex flex-col gap-4">
