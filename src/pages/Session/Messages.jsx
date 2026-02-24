@@ -3,7 +3,7 @@ import { authFetch } from '../../lib/supabase.js'
 import ApplicantRow from '../../components/messages/ApplicantRow.jsx'
 
 export default function Messages(props) {
-  const [sortBy, setSortBy] = createSignal('newest') // 'newest' | 'rating'
+  const [sortBy, setSortBy] = createSignal('newest') // 'newest' | 'myrating'
 
   const [data] = createResource(async () => {
     const [applicants, members] = await Promise.all([
@@ -17,11 +17,11 @@ export default function Messages(props) {
 
   const sortedApplicants = createMemo(() => {
     const list = data()?.applicants ?? []
-    if (sortBy() === 'rating') {
+    if (sortBy() === 'myrating') {
       return [...list].sort((a, b) => {
-        const avgA = calcAvg(a, members())
-        const avgB = calcAvg(b, members())
-        return (avgB ?? -1) - (avgA ?? -1)
+        const rA = a.ratings?.[props.currentUser?.id]?.rating ?? -1
+        const rB = b.ratings?.[props.currentUser?.id]?.rating ?? -1
+        return rB - rA
       })
     }
     // newest message
@@ -31,12 +31,6 @@ export default function Messages(props) {
       return dateB - dateA
     })
   })
-
-  function calcAvg(applicant, mems) {
-    const vals = mems.map(m => applicant.ratings?.[m.user_id]?.rating).filter(v => v != null)
-    if (!vals.length) return null
-    return vals.reduce((s, v) => s + Number(v), 0) / vals.length
-  }
 
   function newestMsg(applicant) {
     const dates = (applicant.messages ?? []).map(m => m.sent_at ? new Date(m.sent_at).getTime() : 0)
@@ -62,10 +56,10 @@ export default function Messages(props) {
             Newest Message
           </button>
           <button
-            onClick={() => setSortBy('rating')}
-            class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === 'rating' ? 'bg-blue-700 text-white' : 'text-gray-400 hover:text-white border border-gray-700'}`}
+            onClick={() => setSortBy('myrating')}
+            class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === 'myrating' ? 'bg-blue-700 text-white' : 'text-gray-400 hover:text-white border border-gray-700'}`}
           >
-            Average Rating
+            My Rating
           </button>
           <span class="text-gray-600 text-xs ml-auto">{sortedApplicants().length} applicant{sortedApplicants().length !== 1 ? 's' : ''}</span>
         </div>
@@ -86,25 +80,9 @@ export default function Messages(props) {
                   <th class="px-2 py-2 text-gray-400 font-medium text-xs border-r border-gray-700 w-10"></th>
                   <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-36">Applicant</th>
                   <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-[320px]">Messages</th>
-                  <For each={members()}>
-                    {(member) => (
-                      <>
-                        <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-20">
-                          <div class="truncate max-w-[80px]" title={member.email}>
-                            {member.email?.split('@')[0]}
-                          </div>
-                          <div class="text-gray-600 font-normal">Rating</div>
-                        </th>
-                        <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-[160px]">
-                          <div class="truncate max-w-[80px]" title={member.email}>
-                            {member.email?.split('@')[0]}
-                          </div>
-                          <div class="text-gray-600 font-normal">Comment</div>
-                        </th>
-                      </>
-                    )}
-                  </For>
-                  <th class="px-3 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-16">Avg</th>
+                  <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-20">My Rating</th>
+                  <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-40">My Comment</th>
+                  <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs min-w-32">Favourites</th>
                 </tr>
               </thead>
               <tbody>

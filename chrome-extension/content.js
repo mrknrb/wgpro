@@ -80,10 +80,11 @@ function parseConversationListPage(doc) {
     if (!conversationId || seen.has(conversationId)) continue
     seen.add(conversationId)
 
-    const name = span.textContent?.trim() || null
 
     // Walk up to find the container that holds the timestamp and links
     let container = span.parentElement
+    
+    const name = container.textContent?.trim() || null
     for (let i = 0; i < 6; i++) {
       if (!container || container === doc.body) break
       if (container.querySelector('.latest_message_timestamp_list')) break
