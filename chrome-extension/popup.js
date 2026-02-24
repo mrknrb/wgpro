@@ -1,4 +1,4 @@
-const APP_URL = 'http://localhost:3010'
+const APP_URL = 'https://wgpro.vercel.app'
 const SUPABASE_URL = 'https://pedsdhtkqzbifeevpszv.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_XhqC14ZdCT7dl127Ur8B_A_V6VkQbzi'
 

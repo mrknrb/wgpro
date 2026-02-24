@@ -11,7 +11,8 @@ async function isMember(supabase, sessionId, userId) {
 }
 
 export default withCors(async function handler(req, res) {
-  const { session_id, date } = req.query
+  const session_id = req.query.session_id ?? req.body?.session_id
+  const { date } = req.query
   try {
     const { user, supabase } = await requireUser(req)
     if (!await isMember(supabase, session_id, user.id)) return err(res, 403, 'Not a member')

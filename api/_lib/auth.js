@@ -15,7 +15,13 @@ export async function requireUser(req) {
   const supabase = getSupabase()
   const { data, error } = await supabase.auth.getUser(token)
   if (error || !data.user) throw new Error('Unauthorized')
-  return { user: data.user, supabase }
+
+  // Create a client with the user's JWT so RLS (auth.uid()) works correctly
+  const authedSupabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false },
+  })
+  return { user: data.user, supabase: authedSupabase }
 }
 
 export function send(res, status, data) {

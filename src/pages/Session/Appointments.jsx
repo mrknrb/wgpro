@@ -95,9 +95,6 @@ export default function Appointments(props) {
 
   return (
     <div class="p-4">
-      <Show when={data.loading}>
-        <p class="text-gray-400 py-8 text-center">Loading...</p>
-      </Show>
       <Show when={data.error}>
         <p class="text-red-400 py-8 text-center">Error loading appointments.</p>
       </Show>
@@ -105,13 +102,10 @@ export default function Appointments(props) {
       {/* Date picker */}
       <div class="flex items-center gap-4 mb-6">
         <label class="text-gray-400 text-sm font-medium">Date:</label>
-        <input
-          type="date"
-          value={selectedDate()}
-          min={todayStr()}
-          onInput={e => setSelectedDate(e.target.value)}
-          class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
-        />
+        <input type="date" value={selectedDate()} min={todayStr()} onInput={(e) => setSelectedDate(e.target.value)} class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500" />
+        <Show when={data.loading}>
+          <p class="text-gray-400 text-center">Loading...</p>
+        </Show>
       </div>
 
       <Show when={data()}>
@@ -123,7 +117,7 @@ export default function Appointments(props) {
                 <For each={members()}>
                   {(member) => (
                     <th class="px-3 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 min-w-[100px]">
-                      <div class="truncate">{member.email?.split('@')[0]}</div>
+                      <div class="truncate">{member.email?.split("@")[0]}</div>
                       {isCurrentUser(member.user_id) && <div class="text-blue-400 text-xs font-normal">(you)</div>}
                     </th>
                   )}
@@ -138,9 +132,7 @@ export default function Appointments(props) {
                   return (
                     <tr class="border-b border-gray-800 last:border-0 hover:bg-gray-900/50">
                       {/* Time slot */}
-                      <td class="px-3 py-2 text-gray-300 font-mono text-sm border-r border-gray-800 whitespace-nowrap">
-                        {String(hour).padStart(2, '0')}:00
-                      </td>
+                      <td class="px-3 py-2 text-gray-300 font-mono text-sm border-r border-gray-800 whitespace-nowrap">{String(hour).padStart(2, "0")}:00</td>
 
                       {/* Member availability cells */}
                       <For each={members()}>
@@ -152,18 +144,11 @@ export default function Appointments(props) {
                                 <button
                                   onClick={() => toggleAvailability(hour)}
                                   disabled={saving() === String(hour)}
-                                  class={`w-7 h-7 rounded-full border-2 transition-all disabled:opacity-50 ${
-                                    isAvailable()
-                                      ? 'bg-green-500 border-green-400'
-                                      : 'bg-transparent border-gray-600 hover:border-green-500'
-                                  }`}
-                                  title={isAvailable() ? 'Available (click to unmark)' : 'Mark as available'}
+                                  class={`w-7 h-7 rounded-full border-2 transition-all disabled:opacity-50 ${isAvailable() ? "bg-green-500 border-green-400" : "bg-transparent border-gray-600 hover:border-green-500"}`}
+                                  title={isAvailable() ? "Available (click to unmark)" : "Mark as available"}
                                 />
                               ) : (
-                                <div
-                                  class={`w-4 h-4 rounded-full mx-auto ${isAvailable() ? 'bg-green-500' : 'bg-gray-700'}`}
-                                  title={isAvailable() ? 'Available' : 'Not available'}
-                                />
+                                <div class={`w-4 h-4 rounded-full mx-auto ${isAvailable() ? "bg-green-500" : "bg-gray-700"}`} title={isAvailable() ? "Available" : "Not available"} />
                               )}
                             </td>
                           )
@@ -174,21 +159,15 @@ export default function Appointments(props) {
                       <td class="px-3 py-2">
                         <div class="flex items-center gap-2">
                           <select
-                            value={booked()?.applicant_id ?? ''}
-                            onChange={e => bookApplicant(hour, e.target.value)}
+                            value={booked()?.applicant_id ?? ""}
+                            onChange={(e) => bookApplicant(hour, e.target.value)}
                             disabled={saving() === `book-${hour}`}
                             class="bg-gray-800 border border-gray-700 text-white text-xs rounded px-2 py-1 focus:outline-none focus:border-blue-500 flex-1 disabled:opacity-50"
                           >
                             <option value="">— No booking —</option>
-                            <For each={applicants()}>
-                              {(applicant) => (
-                                <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>
-                              )}
-                            </For>
+                            <For each={applicants()}>{(applicant) => <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>}</For>
                           </select>
-                          {saving() === `book-${hour}` && (
-                            <span class="text-gray-500 text-xs">Saving...</span>
-                          )}
+                          {saving() === `book-${hour}` && <span class="text-gray-500 text-xs">Saving...</span>}
                         </div>
                       </td>
                     </tr>
