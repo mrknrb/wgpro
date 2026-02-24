@@ -10,6 +10,7 @@ import sessionApplicantsHandler from './_routes/session-applicants.js'
 import sessionAiConfigHandler from './_routes/session-ai-config.js'
 import sessionAppointmentsHandler from './_routes/session-appointments.js'
 import applicantRatingsHandler from './_routes/applicant-ratings.js'
+import applicantFavouriteHandler from './_routes/applicant-favourite.js'
 import applicantAiRateHandler from './_routes/applicant-ai-rate.js'
 import scrapeUploadHandler from './_routes/scrape-upload.js'
 import availabilityHandler from './_routes/availability.js'
@@ -42,6 +43,7 @@ app.all('/api/sessions/:id/appointments', withParams(sessionAppointmentsHandler)
 
 // Applicants
 app.all('/api/applicants/:id/ratings', withParams(applicantRatingsHandler))
+app.all('/api/applicants/:id/favourite', withParams(applicantFavouriteHandler))
 app.all('/api/applicants/:id/ai-rate', withParams(applicantAiRateHandler))
 
 // Scrape upload (from Chrome extension)

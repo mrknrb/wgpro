@@ -39,7 +39,7 @@ export default withCors(async function handler(req, res) {
 
       const enriched = await Promise.all(
         (applicants ?? []).map(async (applicant) => {
-          const [messagesRes, ratingsRes, aiRatingRes] = await Promise.all([
+          const [messagesRes, ratingsRes, favouritesRes, aiRatingRes] = await Promise.all([
             supabase
               .from('messages')
               .select('id, wg_message_id, sender_name, is_from_applicant, content, sent_at')
@@ -50,6 +50,10 @@ export default withCors(async function handler(req, res) {
               .select('user_id, rating, comment')
               .eq('applicant_id', applicant.id),
             supabase
+              .from('favourites')
+              .select('user_id')
+              .eq('applicant_id', applicant.id),
+            supabase
               .from('ai_ratings')
               .select('rating, comment')
               .eq('applicant_id', applicant.id)
@@ -57,6 +61,7 @@ export default withCors(async function handler(req, res) {
           ])
 
           // Build ratings map: { [user_id]: { rating, comment } }
+          // Due to RLS, only the current user's own row is returned
           const ratingsMap = {}
           for (const r of ratingsRes.data ?? []) {
             ratingsMap[r.user_id] = { rating: r.rating, comment: r.comment }
@@ -66,6 +71,7 @@ export default withCors(async function handler(req, res) {
             ...applicant,
             messages: messagesRes.data ?? [],
             ratings: ratingsMap,
+            favourites: (favouritesRes.data ?? []).map(f => f.user_id),
             ai_rating: aiRatingRes.data ?? null,
           }
         })

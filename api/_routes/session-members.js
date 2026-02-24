@@ -18,18 +18,22 @@ export default withCors(async function handler(req, res) {
     if (!membership) return err(res, 403, 'Not a member')
 
     if (req.method === 'GET') {
-      const { data, error } = await supabase
+      const { data: membersData, error } = await supabase
         .from('session_members')
         .select('user_id, is_admin, joined_at')
         .eq('session_id', id)
 
       if (error) return err(res, 500, error.message)
 
-      // Fetch emails from auth.users via admin API is not possible with anon key.
-      // Instead, store email in a profiles table or use the user's own email.
-      // We'll return what we have; the extension/frontend shows email from local state.
-      // To get emails we use the service role — but we only have the public key.
-      // Workaround: store email in session_members on join.
+      const userIds = membersData.map(m => m.user_id)
+      const { data: profilesData, error: profilesError } = await supabase
+        .rpc('get_profiles', { p_user_ids: userIds })
+
+      if (profilesError) return err(res, 500, 'profiles: ' + profilesError.message)
+
+      const profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.user_id, p.username]))
+      const data = membersData.map(m => ({ ...m, username: profileMap[m.user_id] ?? null }))
+
       return send(res, 200, data)
     }
 

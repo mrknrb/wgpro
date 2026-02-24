@@ -187,7 +187,6 @@ export default function Allowance() {
           </div>
         </div>
 
-
         {/* Members list */}
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-5">
           <h2 class="text-white font-semibold mb-4">Members</h2>
@@ -199,9 +198,9 @@ export default function Allowance() {
               {(member) => (
                 <div class="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-white text-xs font-bold">{(member.email?.[0] ?? "?").toUpperCase()}</div>
+                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-white text-xs font-bold">{(member.username?.[0] ?? "?").toUpperCase()}</div>
                     <div>
-                      <p class="text-white text-sm">{member.email}</p>
+                      <p class="text-white text-sm">{member.username ?? member.user_id}</p>
                       {member.is_admin && <span class="text-yellow-500 text-xs">Admin</span>}
                     </div>
                   </div>
