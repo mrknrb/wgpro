@@ -187,24 +187,6 @@ export default function Allowance() {
           </div>
         </div>
 
-        {/* AI Prompt */}
-        <div class="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-white font-semibold">AI System Prompt</h2>
-            <button onClick={saveAiPrompt} disabled={savingPrompt()} class="text-xs bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white px-3 py-1.5 rounded transition-colors">
-              {savingPrompt() ? "Saving..." : promptSaved() ? "Saved!" : "Save Prompt"}
-            </button>
-          </div>
-          <textarea
-            value={aiPrompt()}
-            onInput={(e) => setAiPrompt(e.target.value)}
-            rows={4}
-            class="w-full resize-y h-100 bg-gray-800 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500 resize-none font-mono"
-            placeholder="e.g. Rate this WG applicant from 1 to 5 based on their messages."
-          />
-          <p class="text-gray-600 text-xs  mt-1">The AI receives all applicant messages and replies with a JSON rating. The JSON format instruction is added automatically.</p>
-          {promptError() && <p class="text-red-400 text-sm mt-2">{promptError()}</p>}
-        </div>
 
         {/* Members list */}
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-5">

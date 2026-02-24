@@ -1,7 +1,6 @@
 import { createSignal, For, createEffect } from 'solid-js'
 import NestedMessages from './NestedMessages.jsx'
 import RatingCell from './RatingCell.jsx'
-import AICell from './AICell.jsx'
 
 export default function ApplicantRow(props) {
   // props: applicant, members, currentUserId, rowIndex
@@ -10,8 +9,6 @@ export default function ApplicantRow(props) {
   const applicant = () => props.applicant
   const messages = () => applicant().messages ?? []
   const ratings = () => applicant().ratings ?? {}
-  const aiRating = () => applicant().ai_rating ?? null
-
   const avgRating = () => {
     const vals = props.members
       .map(m => ratings()[m.user_id]?.rating)
@@ -91,13 +88,6 @@ export default function ApplicantRow(props) {
         </div>
       </td>
 
-      {/* AI rating + comment */}
-      <AICell
-        applicantId={applicant().id}
-        initialRating={aiRating()?.rating ?? null}
-        initialComment={aiRating()?.comment ?? ''}
-        expanded={expanded()}
-      />
     </tr>
   )
 }

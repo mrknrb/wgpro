@@ -1,4 +1,4 @@
-import { createSignal, createResource, Show, For, createMemo } from 'solid-js'
+import { createSignal, createResource, createEffect, Show, For, createMemo } from 'solid-js'
 import { authFetch } from '../../lib/supabase.js'
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8) // 8..22
@@ -23,12 +23,21 @@ function formatDayHeader(dateStr) {
 export default function Appointments(props) {
   const [startDate, setStartDate] = createSignal(todayStr())
   const [saving, setSaving] = createSignal(null)
+  const [localAppointments, setLocalAppointments] = createSignal([])
+  const [localAvailability, setLocalAvailability] = createSignal([])
+
+  createEffect(() => {
+    if (data()) {
+      setLocalAppointments(data().allAppointments ?? [])
+      setLocalAvailability(data().allAvailability ?? [])
+    }
+  })
 
   const weekDates = createMemo(() =>
     Array.from({ length: 7 }, (_, i) => addDays(startDate(), i))
   )
 
-  const [data, { refetch }] = createResource(startDate, async () => {
+  const [data] = createResource(startDate, async () => {
     const [members, applicants, allAvailability, allAppointments] = await Promise.all([
       authFetch(`/api/sessions/${props.sessionId}/members`),
       authFetch(`/api/sessions/${props.sessionId}/applicants?minimal=true`),
@@ -44,7 +53,7 @@ export default function Appointments(props) {
   // availabilityMap[date][user_id][hour] = true
   const availabilityMap = createMemo(() => {
     const result = {}
-    for (const row of data()?.allAvailability ?? []) {
+    for (const row of localAvailability()) {
       if (!result[row.date]) result[row.date] = {}
       if (!result[row.date][row.user_id]) result[row.date][row.user_id] = {}
       result[row.date][row.user_id][row.hour] = true
@@ -55,7 +64,7 @@ export default function Appointments(props) {
   // appointmentsMap[date][hour] = row
   const appointmentsMap = createMemo(() => {
     const result = {}
-    for (const row of data()?.allAppointments ?? []) {
+    for (const row of localAppointments()) {
       if (!result[row.date]) result[row.date] = {}
       result[row.date][row.hour] = row
     }
@@ -66,8 +75,16 @@ export default function Appointments(props) {
 
   async function toggleAvailability(date, hour) {
     const key = `${date}-${hour}`
+    const userId = props.currentUser?.id
+    const currently = availabilityMap()[date]?.[userId]?.[hour]
+    // Optimistic update
+    const prev = localAvailability()
+    if (currently) {
+      setLocalAvailability(prev.filter((r) => !(r.date === date && r.user_id === userId && r.hour === hour)))
+    } else {
+      setLocalAvailability([...prev, { date, user_id: userId, hour }])
+    }
     setSaving(key)
-    const currently = availabilityMap()[date]?.[props.currentUser?.id]?.[hour]
     try {
       await authFetch('/api/availability', {
         method: 'POST',
@@ -78,8 +95,8 @@ export default function Appointments(props) {
           available: !currently,
         }),
       })
-      refetch()
     } catch (e) {
+      setLocalAvailability(prev) // revert on error
       alert(e.message)
     } finally {
       setSaving(null)
@@ -87,6 +104,12 @@ export default function Appointments(props) {
   }
 
   async function bookApplicant(date, hour, applicantId) {
+    // Optimistic update — avoids refetch resetting all dropdowns
+    const prev = localAppointments()
+    setLocalAppointments([
+      ...prev.filter((a) => !(a.date === date && a.hour === hour)),
+      ...(applicantId ? [{ date, hour, applicant_id: applicantId }] : []),
+    ])
     setSaving(`book-${date}-${hour}`)
     try {
       await authFetch(`/api/sessions/${props.sessionId}/appointments`, {
@@ -97,8 +120,8 @@ export default function Appointments(props) {
           applicant_id: applicantId || null,
         }),
       })
-      refetch()
     } catch (e) {
+      setLocalAppointments(prev) // revert on error
       alert(e.message)
     } finally {
       setSaving(null)

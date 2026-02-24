@@ -105,8 +105,6 @@ export default function Messages(props) {
                     )}
                   </For>
                   <th class="px-3 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-16">Avg</th>
-                  <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-16">AI Rating</th>
-                  <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs min-w-[200px]">AI Comment</th>
                 </tr>
               </thead>
               <tbody>
