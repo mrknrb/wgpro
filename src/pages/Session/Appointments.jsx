@@ -7,87 +7,99 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+function formatDayHeader(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00')
+  const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
+  const dayMonth = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+  return `${dayName} ${dayMonth}`
+}
+
 export default function Appointments(props) {
-  const [selectedDate, setSelectedDate] = createSignal(todayStr())
+  const [startDate, setStartDate] = createSignal(todayStr())
   const [saving, setSaving] = createSignal(null)
 
-  const [data, { refetch }] = createResource(async () => {
-    const [members, applicants, availability, appointments] = await Promise.all([
+  const weekDates = createMemo(() =>
+    Array.from({ length: 7 }, (_, i) => addDays(startDate(), i))
+  )
+
+  const [data, { refetch }] = createResource(startDate, async () => {
+    const [members, applicants, allAvailability, allAppointments] = await Promise.all([
       authFetch(`/api/sessions/${props.sessionId}/members`),
       authFetch(`/api/sessions/${props.sessionId}/applicants?minimal=true`),
-      authFetch(`/api/availability?session_id=${props.sessionId}&date=${selectedDate()}`),
-      authFetch(`/api/sessions/${props.sessionId}/appointments?date=${selectedDate()}`),
+      authFetch(`/api/availability?session_id=${props.sessionId}`),
+      authFetch(`/api/sessions/${props.sessionId}/appointments`),
     ])
-    return { members, applicants, availability, appointments }
-  })
-
-  // Re-fetch when date changes
-  const dateSignal = () => selectedDate()
-  createMemo(() => {
-    dateSignal()
-    refetch()
+    return { members, applicants, allAvailability: allAvailability ?? [], allAppointments: allAppointments ?? [] }
   })
 
   const members = () => data()?.members ?? []
   const applicants = () => data()?.applicants ?? []
 
-  // availability[user_id][hour] = true
+  // availabilityMap[date][user_id][hour] = true
   const availabilityMap = createMemo(() => {
-    const map = {}
-    for (const row of data()?.availability ?? []) {
-      if (!map[row.user_id]) map[row.user_id] = {}
-      map[row.user_id][row.hour] = true
+    const result = {}
+    for (const row of data()?.allAvailability ?? []) {
+      if (!result[row.date]) result[row.date] = {}
+      if (!result[row.date][row.user_id]) result[row.date][row.user_id] = {}
+      result[row.date][row.user_id][row.hour] = true
     }
-    return map
+    return result
   })
 
-  // appointments[hour] = { applicant_id, applicant_name }
+  // appointmentsMap[date][hour] = row
   const appointmentsMap = createMemo(() => {
-    const map = {}
-    for (const row of data()?.appointments ?? []) {
-      map[row.hour] = row
+    const result = {}
+    for (const row of data()?.allAppointments ?? []) {
+      if (!result[row.date]) result[row.date] = {}
+      result[row.date][row.hour] = row
     }
-    return map
+    return result
   })
 
   const isCurrentUser = (userId) => userId === props.currentUser?.id
 
-  async function toggleAvailability(hour) {
-    const key = `${hour}`
+  async function toggleAvailability(date, hour) {
+    const key = `${date}-${hour}`
     setSaving(key)
-    const currently = availabilityMap()[props.currentUser?.id]?.[hour]
+    const currently = availabilityMap()[date]?.[props.currentUser?.id]?.[hour]
     try {
       await authFetch('/api/availability', {
         method: 'POST',
         body: JSON.stringify({
           session_id: props.sessionId,
-          date: selectedDate(),
+          date,
           hour,
           available: !currently,
         }),
       })
       refetch()
-    } catch (err) {
-      alert(err.message)
+    } catch (e) {
+      alert(e.message)
     } finally {
       setSaving(null)
     }
   }
 
-  async function bookApplicant(hour, applicantId) {
-    setSaving(`book-${hour}`)
+  async function bookApplicant(date, hour, applicantId) {
+    setSaving(`book-${date}-${hour}`)
     try {
       await authFetch(`/api/sessions/${props.sessionId}/appointments`, {
         method: 'POST',
         body: JSON.stringify({
-          date: selectedDate(),
+          date,
           hour,
           applicant_id: applicantId || null,
         }),
       })
       refetch()
-    } catch (err) {
-      alert(err.message)
+    } catch (e) {
+      alert(e.message)
     } finally {
       setSaving(null)
     }
@@ -99,86 +111,134 @@ export default function Appointments(props) {
         <p class="text-red-400 py-8 text-center">Error loading appointments.</p>
       </Show>
 
-      {/* Date picker */}
+      {/* Week start picker */}
       <div class="flex items-center gap-4 mb-6">
-        <label class="text-gray-400 text-sm font-medium">Date:</label>
-        <input type="date" value={selectedDate()} min={todayStr()} onInput={(e) => setSelectedDate(e.target.value)} class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500" />
+        <label class="text-gray-400 text-sm font-medium">Week from:</label>
+        <input
+          type="date"
+          value={startDate()}
+          onInput={(e) => setStartDate(e.target.value)}
+          class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+        />
         <Show when={data.loading}>
-          <p class="text-gray-400 text-center">Loading...</p>
+          <span class="text-gray-400 text-sm">Loading...</span>
         </Show>
       </div>
 
       <Show when={data()}>
         <div class="overflow-x-auto rounded-xl border border-gray-800">
-          <table class="min-w-full border-collapse text-sm">
+          <table class="border-collapse text-sm" style="min-width: max-content">
             <thead>
-              <tr class="bg-gray-800 border-b border-gray-700">
-                <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-16">Time</th>
-                <For each={members()}>
-                  {(member) => (
-                    <th class="px-3 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 min-w-[100px]">
-                      <div class="truncate">{member.email?.split("@")[0]}</div>
-                      {isCurrentUser(member.user_id) && <div class="text-blue-400 text-xs font-normal">(you)</div>}
+              {/* Day header row */}
+              <tr class="bg-gray-900 border-b border-gray-700">
+                <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-16 sticky left-0 bg-gray-900 z-10">
+                  Time
+                </th>
+                <For each={weekDates()}>
+                  {(date) => (
+                    <th
+                      colspan={members().length + 1}
+                      class={`px-3 py-2 text-center font-medium text-xs border-r ${date === todayStr() ? 'border-blue-600 text-blue-300 bg-blue-950/40' : 'border-gray-600 text-gray-200'}`}
+                    >
+                      {formatDayHeader(date)}
                     </th>
                   )}
                 </For>
-                <th class="px-3 py-2 text-center text-gray-400 font-medium text-xs min-w-[160px]">Booked Applicant</th>
+              </tr>
+              {/* Member sub-header row */}
+              <tr class="bg-gray-800 border-b border-gray-700">
+                <th class="px-3 py-2 border-r border-gray-700 w-16 sticky left-0 bg-gray-800 z-10" />
+                <For each={weekDates()}>
+                  {(date) => (
+                    <>
+                      <For each={members()}>
+                        {(member) => (
+                          <th class={`px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 min-w-18 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
+                            <div class="truncate max-w-17">{member.email?.split('@')[0]}</div>
+                            <Show when={isCurrentUser(member.user_id)}>
+                              <div class="text-blue-400 text-xs font-normal">(you)</div>
+                            </Show>
+                          </th>
+                        )}
+                      </For>
+                      <th class={`px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-600 min-w-32.5 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
+                        Booked
+                      </th>
+                    </>
+                  )}
+                </For>
               </tr>
             </thead>
             <tbody>
               <For each={HOURS}>
-                {(hour) => {
-                  const booked = () => appointmentsMap()[hour]
-                  return (
-                    <tr class="border-b border-gray-800 last:border-0 hover:bg-gray-900/50">
-                      {/* Time slot */}
-                      <td class="px-3 py-2 text-gray-300 font-mono text-sm border-r border-gray-800 whitespace-nowrap">{String(hour).padStart(2, "0")}:00</td>
+                {(hour) => (
+                  <tr class="border-b border-gray-800 last:border-0 hover:bg-gray-900/30">
+                    {/* Sticky time column */}
+                    <td class="px-3 py-2 text-gray-300 font-mono text-sm border-r border-gray-800 whitespace-nowrap sticky left-0 bg-gray-950 z-10">
+                      {String(hour).padStart(2, '0')}:00
+                    </td>
 
-                      {/* Member availability cells */}
-                      <For each={members()}>
-                        {(member) => {
-                          const isAvailable = () => availabilityMap()[member.user_id]?.[hour]
-                          return (
-                            <td class="px-3 py-2 text-center border-r border-gray-800">
-                              {isCurrentUser(member.user_id) ? (
-                                <button
-                                  onClick={() => toggleAvailability(hour)}
-                                  disabled={saving() === String(hour)}
-                                  class={`w-7 h-7 rounded-full border-2 transition-all disabled:opacity-50 ${isAvailable() ? "bg-green-500 border-green-400" : "bg-transparent border-gray-600 hover:border-green-500"}`}
-                                  title={isAvailable() ? "Available (click to unmark)" : "Mark as available"}
-                                />
-                              ) : (
-                                <div class={`w-4 h-4 rounded-full mx-auto ${isAvailable() ? "bg-green-500" : "bg-gray-700"}`} title={isAvailable() ? "Available" : "Not available"} />
-                              )}
+                    <For each={weekDates()}>
+                      {(date) => {
+                        const booked = () => appointmentsMap()[date]?.[hour]
+                        const isToday = date === todayStr()
+                        return (
+                          <>
+                            <For each={members()}>
+                              {(member) => {
+                                const isAvailable = () => availabilityMap()[date]?.[member.user_id]?.[hour]
+                                const savingKey = `${date}-${hour}`
+                                return (
+                                  <td class={`px-2 py-2 text-center border-r border-gray-800 ${isToday ? 'bg-blue-950/10' : ''}`}>
+                                    <Show
+                                      when={isCurrentUser(member.user_id)}
+                                      fallback={
+                                        <div
+                                          class={`w-3.5 h-3.5 rounded-full mx-auto ${isAvailable() ? 'bg-green-500' : 'bg-gray-700'}`}
+                                          title={isAvailable() ? 'Available' : 'Not available'}
+                                        />
+                                      }
+                                    >
+                                      <button
+                                        onClick={() => toggleAvailability(date, hour)}
+                                        disabled={saving() === savingKey}
+                                        class={`w-6 h-6 rounded-full border-2 transition-all disabled:opacity-50 ${isAvailable() ? 'bg-green-500 border-green-400' : 'bg-transparent border-gray-600 hover:border-green-500'}`}
+                                        title={isAvailable() ? 'Available — click to unmark' : 'Mark as available'}
+                                      />
+                                    </Show>
+                                  </td>
+                                )
+                              }}
+                            </For>
+                            {/* Booking column */}
+                            <td class={`px-2 py-1.5 border-r border-gray-600 ${isToday ? 'bg-blue-950/10' : ''}`}>
+                              <select
+                                value={booked()?.applicant_id ?? ''}
+                                onChange={(e) => bookApplicant(date, hour, e.target.value)}
+                                disabled={saving() === `book-${date}-${hour}`}
+                                class="bg-gray-800 border border-gray-700 text-white text-xs rounded px-1.5 py-1 focus:outline-none focus:border-blue-500 w-full disabled:opacity-50"
+                              >
+                                <option value="">—</option>
+                                <For each={applicants()}>
+                                  {(applicant) => (
+                                    <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>
+                                  )}
+                                </For>
+                              </select>
                             </td>
-                          )
-                        }}
-                      </For>
-
-                      {/* Booked applicant column */}
-                      <td class="px-3 py-2">
-                        <div class="flex items-center gap-2">
-                          <select
-                            value={booked()?.applicant_id ?? ""}
-                            onChange={(e) => bookApplicant(hour, e.target.value)}
-                            disabled={saving() === `book-${hour}`}
-                            class="bg-gray-800 border border-gray-700 text-white text-xs rounded px-2 py-1 focus:outline-none focus:border-blue-500 flex-1 disabled:opacity-50"
-                          >
-                            <option value="">— No booking —</option>
-                            <For each={applicants()}>{(applicant) => <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>}</For>
-                          </select>
-                          {saving() === `book-${hour}` && <span class="text-gray-500 text-xs">Saving...</span>}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                }}
+                          </>
+                        )
+                      }}
+                    </For>
+                  </tr>
+                )}
               </For>
             </tbody>
           </table>
         </div>
-
-        <p class="text-gray-600 text-xs mt-3">Green circle = available. Click your own cell to toggle availability. Select an applicant in the last column to book them into that slot.</p>
+        <p class="text-gray-600 text-xs mt-3">
+          Green = available. Click your cell to toggle. Select an applicant to book a slot. Today is highlighted in blue.
+        </p>
       </Show>
     </div>
   )
