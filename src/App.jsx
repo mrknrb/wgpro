@@ -6,7 +6,6 @@ const Login = lazy(() => import('./pages/Login.jsx'))
 const Register = lazy(() => import('./pages/Register.jsx'))
 const Home = lazy(() => import('./pages/Home.jsx'))
 const JoinRequest = lazy(() => import('./pages/JoinRequest.jsx'))
-const Allowance = lazy(() => import('./pages/Allowance.jsx'))
 const SessionMessages = lazy(() => import('./pages/Session/index.jsx'))
 
 function App() {
@@ -44,7 +43,7 @@ function App() {
           path="/session/:id/allowance"
           component={() => (
             <ProtectedRoute>
-              <Allowance />
+              <SessionMessages tab="settings" />
             </ProtectedRoute>
           )}
         />

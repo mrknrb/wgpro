@@ -1,5 +1,6 @@
 import { createSignal, createResource, createEffect, Show, For, createMemo } from 'solid-js'
 import { authFetch } from '../../lib/supabase.js'
+import DateSelect from '../../components/DateSelect.jsx'
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8) // 8..22
 
@@ -137,12 +138,7 @@ export default function Appointments(props) {
       {/* Week start picker */}
       <div class="flex items-center gap-4 mb-6">
         <label class="text-gray-400 text-sm font-medium">Week from:</label>
-        <input
-          type="date"
-          value={startDate()}
-          onInput={(e) => setStartDate(e.target.value)}
-          class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
-        />
+        <DateSelect value={startDate()} onInput={(e) => setStartDate(e.target.value)} />
         <Show when={data.loading}>
           <span class="text-gray-400 text-sm">Loading...</span>
         </Show>

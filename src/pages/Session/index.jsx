@@ -3,6 +3,7 @@ import { useParams, useNavigate, A } from '@solidjs/router'
 import Navbar from '../../components/Navbar.jsx'
 import Messages from './Messages.jsx'
 import Appointments from './Appointments.jsx'
+import Allowance from '../Allowance.jsx'
 import { authFetch, supabase } from '../../lib/supabase.js'
 
 export default function SessionPage(props) {
@@ -46,7 +47,7 @@ export default function SessionPage(props) {
               <Show when={isAdmin()}>
                 <A
                   href={`/session/${params.id}/allowance`}
-                  class="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded transition-colors"
+                  class={`text-sm px-4 py-1.5 rounded transition-colors ${props.tab === 'settings' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
                 >
                   Settings
                 </A>
@@ -72,6 +73,9 @@ export default function SessionPage(props) {
         </Show>
         <Show when={props.tab === 'appointments'}>
           <Appointments sessionId={params.id} currentUser={currentUser()} />
+        </Show>
+        <Show when={props.tab === 'settings'}>
+          <Allowance />
         </Show>
       </Show>
     </div>

@@ -1,11 +1,10 @@
 import { createSignal, createResource, Show, For } from 'solid-js'
-import { useParams, useNavigate } from '@solidjs/router'
-import Navbar from '../components/Navbar.jsx'
+import { useParams } from '@solidjs/router'
 import { authFetch } from '../lib/supabase.js'
+import DateSelect from '../components/DateSelect.jsx'
 
 export default function Allowance() {
   const params = useParams()
-  const navigate = useNavigate()
   const [processing, setProcessing] = createSignal(null)
   const [adUrl, setAdUrl] = createSignal('')
   const [cutoffDate, setCutoffDate] = createSignal('')
@@ -113,16 +112,7 @@ export default function Allowance() {
   }
 
   return (
-    <div class="min-h-screen bg-gray-950">
-      <Navbar />
-      <main class="max-w-3xl mx-auto px-4 py-8">
-        <div class="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(`/session/${params.id}`)} class="text-gray-400 hover:text-white text-sm">
-            ← Back
-          </button>
-          <h1 class="text-white text-2xl font-bold">Settings</h1>
-        </div>
-
+    <main class="max-w-3xl mx-auto px-4 py-8">
         {/* Session Settings */}
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
           <h2 class="text-white font-semibold mb-3">Session Settings</h2>
@@ -134,7 +124,7 @@ export default function Allowance() {
             </div>
             <div>
               <label class="block text-gray-400 text-sm mb-1">Scrape cutoff date</label>
-              <input type="date" value={cutoffDate()} onInput={(e) => setCutoffDate(e.target.value)} class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+              <DateSelect value={cutoffDate()} onInput={(e) => setCutoffDate(e.target.value)} class="w-full" />
               <p class="text-gray-600 text-xs mt-1">The extension stops scraping conversations with no messages after this date. Leave empty to scrape all.</p>
             </div>
             {adUrlError() && <p class="text-red-400 text-sm">{adUrlError()}</p>}
@@ -212,7 +202,6 @@ export default function Allowance() {
             </For>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   )
 }
