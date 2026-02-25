@@ -39,8 +39,8 @@ export default function FavouriteCell(props) {
   const mine = () => isFav(props.currentUserId)
 
   return (
-    <td class="px-3 py-2 align-top min-w-32">
-      <div class={`flex items-start gap-2 ${!props.expanded ? "overflow-hidden max-h-6" : ""}`}>
+    <td class="px-3 py-2 align-top min-w-80">
+      <div class="flex items-start gap-2">
         {/* Toggle heart — always visible */}
         <button
           onClick={toggle}
@@ -52,7 +52,7 @@ export default function FavouriteCell(props) {
         </button>
 
         {/* Names of everyone who has favourited */}
-        <div class={`flex flex-wrap gap-1 ${!props.expanded ? "items-center" : ""}`}>
+        <div class="flex flex-wrap gap-1 items-center">
           <For each={favMembers()}>
             {(member) => <span class={`text-xs px-1.5 py-0.5 rounded font-medium ${member.user_id === props.currentUserId ? "bg-red-900/50 text-red-300 ring-1 ring-red-700/40" : "bg-purple-900/50 text-purple-300 ring-1 ring-purple-700/40"}`}>{member.username ?? member.email?.split("@")[0]}</span>}
           </For>
