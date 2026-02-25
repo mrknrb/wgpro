@@ -18,7 +18,11 @@ export default function Navbar() {
 
   return (
     <nav class="bg-gray-900 border-b border-gray-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-      <A href="/" class="text-white font-bold text-lg tracking-tight">WGPro</A>
+      
+      <A href="/" class="flex items-center gap-2 text-white font-bold text-lg tracking-tight">
+        <img src="/vite.svg" class="w-6 h-6" alt="logo" />
+        WGPro
+      </A>
 
       {/* Desktop nav */}
       <div class="hidden sm:flex items-center gap-4">
