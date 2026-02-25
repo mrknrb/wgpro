@@ -52,7 +52,8 @@ export default function StatusCell(props) {
   }
 
   return (
-    <td class="border-r border-gray-800 px-2 py-2 align-top w-28 relative">
+    <td class="border-r border-gray-800 px-2 py-2 align-top w-28">
+      <div class="relative">
       <button
         onClick={openDropdown}
         disabled={saving()}
@@ -72,6 +73,7 @@ export default function StatusCell(props) {
           ))}
         </div>
       )}
+      </div>
     </td>
   )
 }
