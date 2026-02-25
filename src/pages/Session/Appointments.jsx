@@ -26,7 +26,13 @@ function formatDayHeader(dateStr) {
 }
 
 export default function Appointments(props) {
-  const [startDate, setStartDate] = createSignal(todayStr())
+  const lsKey = `appointments_start_${props.sessionId}`
+  const [startDate, setStartDate] = createSignal(localStorage.getItem(lsKey) || todayStr())
+
+  function setStartDatePersist(val) {
+    setStartDate(val)
+    localStorage.setItem(lsKey, val)
+  }
   const [saving, setSaving] = createSignal(null)
   const [localAppointments, setLocalAppointments] = createSignal([])
   const [localAvailability, setLocalAvailability] = createSignal([])
@@ -142,7 +148,7 @@ export default function Appointments(props) {
       {/* Week start picker */}
       <div class="flex items-center gap-4 mb-6">
         <label class="text-gray-400 text-sm font-medium">Week from:</label>
-        <DateSelect value={startDate()} onInput={(e) => setStartDate(e.target.value)} />
+        <DateSelect value={startDate()} onInput={(e) => setStartDatePersist(e.target.value)} />
         <Show when={data.loading}>
           <span class="text-gray-400 text-sm">Loading...</span>
         </Show>
