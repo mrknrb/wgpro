@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js'
 import NestedMessages from './NestedMessages.jsx'
 import RatingCell from './RatingCell.jsx'
 import FavouriteCell from './FavouriteCell.jsx'
+import StatusCell from './StatusCell.jsx'
 
 export default function ApplicantRow(props) {
   // props: applicant, members, currentUserId, rowIndex
@@ -53,6 +54,17 @@ export default function ApplicantRow(props) {
         <div class={!expanded() ? "overflow-hidden max-h-7" : ""}>
           <NestedMessages messages={messages()} expanded={expanded()} />
         </div>
+      </td>
+
+      {/* Status */}
+      <StatusCell applicantId={applicant().id} initialStatus={applicant().status ?? 'Applied'} />
+
+      {/* Appointment */}
+      <td class="border-r border-gray-800 px-2 py-2 align-top w-28 text-xs text-gray-300 whitespace-nowrap">
+        {applicant().appointment
+          ? `${new Date(applicant().appointment.date).toLocaleDateString('de-DE')} ${String(applicant().appointment.hour).padStart(2, '0')}:00`
+          : <span class="text-gray-600">—</span>
+        }
       </td>
 
       {/* Own rating + comment (private) */}

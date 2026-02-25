@@ -177,7 +177,7 @@ export default function Appointments(props) {
                       <For each={members()}>
                         {(member) => (
                           <th class={`px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 min-w-18 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
-                            <div class="truncate max-w-17">{member.email?.split('@')[0]}</div>
+                            <div class="truncate max-w-17">{member.username}</div>
                             <Show when={isCurrentUser(member.user_id)}>
                               <div class="text-blue-400 text-xs font-normal">(you)</div>
                             </Show>

@@ -32,14 +32,14 @@ export default withCors(async function handler(req, res) {
       // Full list with messages and ratings
       const { data: applicants, error } = await supabase
         .from('applicants')
-        .select('id, name, profile_url, photo_url, wg_conversation_id, last_message_id, created_at')
+        .select('id, name, profile_url, photo_url, wg_conversation_id, last_message_id, created_at, status')
         .eq('session_id', id)
 
       if (error) return err(res, 500, error.message)
 
       const enriched = await Promise.all(
         (applicants ?? []).map(async (applicant) => {
-          const [messagesRes, ratingsRes, favouritesRes, aiRatingRes] = await Promise.all([
+          const [messagesRes, ratingsRes, favouritesRes, aiRatingRes, appointmentRes] = await Promise.all([
             supabase
               .from('messages')
               .select('id, wg_message_id, sender_name, is_from_applicant, content, sent_at')
@@ -58,6 +58,12 @@ export default withCors(async function handler(req, res) {
               .select('rating, comment')
               .eq('applicant_id', applicant.id)
               .single(),
+            supabase
+              .from('applicant_appointments')
+              .select('date, hour')
+              .eq('applicant_id', applicant.id)
+              .eq('session_id', id)
+              .maybeSingle(),
           ])
 
           // Build ratings map: { [user_id]: { rating, comment } }
@@ -73,6 +79,7 @@ export default withCors(async function handler(req, res) {
             ratings: ratingsMap,
             favourites: (favouritesRes.data ?? []).map(f => f.user_id),
             ai_rating: aiRatingRes.data ?? null,
+            appointment: appointmentRes.data ?? null,
           }
         })
       )
