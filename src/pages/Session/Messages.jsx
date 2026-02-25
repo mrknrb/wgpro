@@ -15,12 +15,17 @@ export default function Messages(props) {
 
   const members = () => data()?.members ?? []
 
+  // Track ratings saved in this session so the sort reflects real-time changes
+  const [localRatings, setLocalRatings] = createSignal({})
+
   const sortedApplicants = createMemo(() => {
     const list = data()?.applicants ?? []
     if (sortBy() === 'myrating') {
+      const userId = props.currentUser?.id
       return [...list].sort((a, b) => {
-        const rA = a.ratings?.[props.currentUser?.id]?.rating ?? -1
-        const rB = b.ratings?.[props.currentUser?.id]?.rating ?? -1
+        const local = localRatings()
+        const rA = a.id in local ? (local[a.id] ?? -1) : (a.ratings?.[userId]?.rating ?? -1)
+        const rB = b.id in local ? (local[b.id] ?? -1) : (b.ratings?.[userId]?.rating ?? -1)
         return rB - rA
       })
     }
@@ -83,7 +88,7 @@ export default function Messages(props) {
                 </tr>
               </thead>
               <tbody>
-                <For each={sortedApplicants()}>{(applicant, idx) => <ApplicantRow applicant={applicant} members={members()} currentUserId={props.currentUser?.id} rowIndex={idx()} />}</For>
+                <For each={sortedApplicants()}>{(applicant, idx) => <ApplicantRow applicant={applicant} members={members()} currentUserId={props.currentUser?.id} rowIndex={idx()} onRatingSaved={(r) => setLocalRatings(prev => ({ ...prev, [applicant.id]: r.rating === '' ? null : Number(r.rating) }))} />}</For>
               </tbody>
             </table>
           </div>
