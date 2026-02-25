@@ -1,4 +1,4 @@
-import { createResource, Show } from 'solid-js'
+import { createResource, createEffect, Show } from 'solid-js'
 import { useParams, useNavigate, A } from '@solidjs/router'
 import Navbar from '../../components/Navbar.jsx'
 import Messages from './Messages.jsx'
@@ -18,6 +18,10 @@ export default function SessionPage(props) {
     return data.user
   })
 
+  createEffect(() => {
+    if (session.error) navigate('/')
+  })
+
   const isAdmin = () => session()?.is_admin
 
   return (
@@ -25,9 +29,6 @@ export default function SessionPage(props) {
       <Navbar />
       <Show when={session.loading}>
         <div class="flex items-center justify-center py-20 text-gray-400">Loading session...</div>
-      </Show>
-      <Show when={session.error}>
-        <div class="flex items-center justify-center py-20 text-red-400">Access denied or session not found.</div>
       </Show>
       <Show when={session()}>
         <div class="border-b border-gray-800 bg-gray-900">

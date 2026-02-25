@@ -22,11 +22,12 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      const { error: err } = await supabase.auth.signUp({
+      const { data: signUpData, error: err } = await supabase.auth.signUp({
         email: email(),
         password: password(),
         options: { data: { username: username() } },
       })
+      console.log('signUp result:', JSON.stringify({ data: signUpData, err }, null, 2))
       if (err) throw err
       setSuccess('Account created! Check your email to confirm, then log in.')
     } catch (err) {
