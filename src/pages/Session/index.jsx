@@ -35,12 +35,7 @@ export default function SessionPage(props) {
         <div class="border-b border-gray-800 bg-gray-900">
           <div class="max-w-full px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/')}
-                class="text-gray-400 hover:text-white text-sm"
-              >
-                ←
-              </button>
+             
               <h1 class="text-white font-bold text-base">{session()?.name}</h1>
             </div>
             <div class="flex items-center gap-2">

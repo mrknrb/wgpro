@@ -43,7 +43,11 @@ export default function JoinRequest() {
   return (
     <div class="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div class="w-full max-w-sm">
-        <h1 class="text-white text-2xl font-bold mb-6 text-center">WGPro</h1>
+        
+        <h1 class="text-white text-2xl font-bold mb-6 flex items-center justify-center gap-2">
+          <img src="/vite.svg" class="w-7 h-7" alt="logo" />
+          WGPro
+        </h1>
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
           <Show when={!token}>
             <p class="text-red-400">Invalid invite link.</p>

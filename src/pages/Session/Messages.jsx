@@ -38,7 +38,7 @@ export default function Messages(props) {
   }
 
   return (
-    <div class="p-4">
+    <div class="pt-2">
       <Show when={data.loading}>
         <p class="text-gray-400 py-8 text-center">Loading...</p>
       </Show>
@@ -48,7 +48,7 @@ export default function Messages(props) {
       <Show when={data()}>
         {/* Sort controls */}
         <div class="flex items-center gap-3 mb-4">
-          <span class="text-gray-400 text-sm">Sort by:</span>
+          <span class="text-gray-400 text-sm pl-2">Sort by:</span>
           <button onClick={() => setSortBy("newest")} class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === "newest" ? "bg-blue-700 text-white" : "text-gray-400 hover:text-white border border-gray-700"}`}>
             Newest Message
           </button>
