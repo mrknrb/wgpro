@@ -4,7 +4,7 @@ export default function NestedMessages(props) {
   // props: messages (array), expanded
   function formatTime(ts) {
     if (!ts) return ''
-    return new Date(ts).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    return new Date(ts).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
   }
 
   return (

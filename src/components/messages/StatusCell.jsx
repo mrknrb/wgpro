@@ -66,7 +66,7 @@ export default function StatusCell(props) {
           {STATUSES.map(s => (
             <button
               onClick={e => select(e, s)}
-              class={`block w-full text-left text-xs px-3 py-1.5 hover:bg-gray-700 transition-colors ${s === status() ? 'text-white font-semibold' : 'text-gray-300'}`}
+              class={`block w-full text-left text-xs px-3 py-1.5 border-b border-gray-800/50 last:border-0 transition-opacity hover:opacity-100 ${s === status() ? 'opacity-100 font-semibold' : 'opacity-60'} ${STATUS_STYLES[s]}`}
             >
               {s}
             </button>

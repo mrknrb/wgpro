@@ -64,7 +64,7 @@ export default function RatingCell(props) {
               onBlur={save}
               disabled={saving()}
               rows={props.expanded ? 4 : 1}
-              class="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-2 py-0.5 focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50"
+              class="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded px-2 py-0.5 focus:outline-none focus:border-blue-500 resize-y disabled:opacity-50"
               placeholder="Comment..."
             />
           ) : (
