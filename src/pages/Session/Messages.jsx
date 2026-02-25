@@ -49,19 +49,15 @@ export default function Messages(props) {
         {/* Sort controls */}
         <div class="flex items-center gap-3 mb-4">
           <span class="text-gray-400 text-sm">Sort by:</span>
-          <button
-            onClick={() => setSortBy('newest')}
-            class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === 'newest' ? 'bg-blue-700 text-white' : 'text-gray-400 hover:text-white border border-gray-700'}`}
-          >
+          <button onClick={() => setSortBy("newest")} class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === "newest" ? "bg-blue-700 text-white" : "text-gray-400 hover:text-white border border-gray-700"}`}>
             Newest Message
           </button>
-          <button
-            onClick={() => setSortBy('myrating')}
-            class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === 'myrating' ? 'bg-blue-700 text-white' : 'text-gray-400 hover:text-white border border-gray-700'}`}
-          >
+          <button onClick={() => setSortBy("myrating")} class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === "myrating" ? "bg-blue-700 text-white" : "text-gray-400 hover:text-white border border-gray-700"}`}>
             My Rating
           </button>
-          <span class="text-gray-600 text-xs ml-auto">{sortedApplicants().length} applicant{sortedApplicants().length !== 1 ? 's' : ''}</span>
+          <span class="text-gray-600 text-xs ml-auto">
+            {sortedApplicants().length} applicant{sortedApplicants().length !== 1 ? "s" : ""}
+          </span>
         </div>
 
         <Show when={sortedApplicants().length === 0}>
@@ -81,22 +77,13 @@ export default function Messages(props) {
                   <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-[320px]">Messages</th>
                   <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-28">Status</th>
                   <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-28">Appointment</th>
-                  <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-20">My Rating</th>
-                  <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-40">My Comment</th>
+                  <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-20">Rating (private)</th>
+                  <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-40">Comment (private)</th>
                   <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs min-w-32">Favourites</th>
                 </tr>
               </thead>
               <tbody>
-                <For each={sortedApplicants()}>
-                  {(applicant, idx) => (
-                    <ApplicantRow
-                      applicant={applicant}
-                      members={members()}
-                      currentUserId={props.currentUser?.id}
-                      rowIndex={idx()}
-                    />
-                  )}
-                </For>
+                <For each={sortedApplicants()}>{(applicant, idx) => <ApplicantRow applicant={applicant} members={members()} currentUserId={props.currentUser?.id} rowIndex={idx()} />}</For>
               </tbody>
             </table>
           </div>

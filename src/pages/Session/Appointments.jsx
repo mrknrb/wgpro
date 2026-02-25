@@ -4,14 +4,18 @@ import DateSelect from '../../components/DateSelect.jsx'
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8) // 8..22
 
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  return localDateStr(new Date())
 }
 
 function addDays(dateStr, n) {
   const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
+  return localDateStr(d)
 }
 
 function formatDayHeader(dateStr) {
