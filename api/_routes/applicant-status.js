@@ -1,6 +1,6 @@
 import { requireUser, err, send, withCors } from '../_lib/auth.js'
 
-const VALID_STATUSES = ['Declined', 'Applied', 'Appointment', 'Casting']
+const VALID_STATUSES = ['Declined', 'Applied', 'Appointment', 'Casting','AfterCasting', 'Accepted']
 
 export default withCors(async function handler(req, res) {
   const { id } = req.query

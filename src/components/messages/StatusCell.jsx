@@ -1,13 +1,15 @@
 import { createSignal, onCleanup } from 'solid-js'
 import { authFetch } from '../../lib/supabase.js'
 
-const STATUSES = ['Applied', 'Appointment', 'Casting', 'Declined']
+const STATUSES = ['Applied', 'Appointment', 'Casting', 'AfterCasting', 'Accepted', 'Declined']
 
 const STATUS_STYLES = {
-  Applied:     'bg-blue-900/60 text-blue-300 border-blue-700/50',
-  Appointment: 'bg-green-900/60 text-green-300 border-green-700/50',
-  Casting:     'bg-purple-900/60 text-purple-300 border-purple-700/50',
-  Declined:    'bg-red-900/60 text-red-300 border-red-700/50',
+  Applied:      'bg-blue-900/60 text-blue-300 border-blue-700/50',
+  Appointment:  'bg-green-900/60 text-green-300 border-green-700/50',
+  Casting:      'bg-purple-900/60 text-purple-300 border-purple-700/50',
+  AfterCasting: 'bg-orange-900/60 text-orange-300 border-orange-700/50',
+  Accepted:     'bg-emerald-900/60 text-emerald-300 border-emerald-700/50',
+  Declined:     'bg-red-900/60 text-red-300 border-red-700/50',
 }
 
 export default function StatusCell(props) {

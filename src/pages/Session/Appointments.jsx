@@ -170,13 +170,13 @@ export default function Appointments(props) {
               </tr>
               {/* Member sub-header row */}
               <tr class="bg-gray-800 border-b border-gray-700">
-                <th class="px-3 py-2 border-r border-gray-700 w-16 sticky left-0 bg-gray-800 z-10" />
+                <th class=" border-r border-gray-700 w-16 sticky left-0 bg-gray-800 z-10" />
                 <For each={weekDates()}>
                   {(date) => (
                     <>
                       <For each={members()}>
                         {(member) => (
-                          <th class={`px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 min-w-18 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
+                          <th class={` text-center text-gray-400 font-medium text-xs border-r border-gray-700 min-w-10 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
                             <div class="truncate max-w-17">{member.username}</div>
                             <Show when={isCurrentUser(member.user_id)}>
                               <div class="text-blue-400 text-xs font-normal">(you)</div>
@@ -212,21 +212,13 @@ export default function Appointments(props) {
                                 const isAvailable = () => availabilityMap()[date]?.[member.user_id]?.[hour]
                                 const savingKey = `${date}-${hour}`
                                 return (
-                                  <td class={`px-2 py-2 text-center border-r border-gray-800 ${isToday ? 'bg-blue-950/10' : ''}`}>
-                                    <Show
-                                      when={isCurrentUser(member.user_id)}
-                                      fallback={
-                                        <div
-                                          class={`w-3.5 h-3.5 rounded-full mx-auto ${isAvailable() ? 'bg-green-500' : 'bg-gray-700'}`}
-                                          title={isAvailable() ? 'Available' : 'Not available'}
-                                        />
-                                      }
-                                    >
+                                  <td class={`  text-center border-r border-gray-800 ${isToday ? "bg-blue-950/10" : ""}`}>
+                                    <Show when={isCurrentUser(member.user_id)} fallback={<div class={`w-3.5 h-3.5 rounded-full mx-auto ${isAvailable() ? "bg-green-500" : "bg-gray-700"}`} title={isAvailable() ? "Available" : "Not available"} />}>
                                       <button
                                         onClick={() => toggleAvailability(date, hour)}
                                         disabled={saving() === savingKey}
-                                        class={`w-6 h-6 rounded-full border-2 transition-all disabled:opacity-50 ${isAvailable() ? 'bg-green-500 border-green-400' : 'bg-transparent border-gray-600 hover:border-green-500'}`}
-                                        title={isAvailable() ? 'Available — click to unmark' : 'Mark as available'}
+                                        class={`cursor-pointer w-6 h-6 rounded-full border-2 transition-all disabled:opacity-50 ${isAvailable() ? "bg-green-500 border-green-400" : "bg-transparent border-gray-600 hover:border-green-500"}`}
+                                        title={isAvailable() ? "Available — click to unmark" : "Mark as available"}
                                       />
                                     </Show>
                                   </td>
@@ -234,19 +226,15 @@ export default function Appointments(props) {
                               }}
                             </For>
                             {/* Booking column */}
-                            <td class={`px-2 py-1.5 border-r border-gray-600 ${isToday ? 'bg-blue-950/10' : ''}`}>
+                            <td class={`px-2 py-1.5 border-r border-gray-600 ${isToday ? "bg-blue-950/10" : ""}`}>
                               <select
-                                value={booked()?.applicant_id ?? ''}
+                                value={booked()?.applicant_id ?? ""}
                                 onChange={(e) => bookApplicant(date, hour, e.target.value)}
                                 disabled={saving() === `book-${date}-${hour}`}
-                                class="bg-gray-800 border border-gray-700 text-white text-xs rounded px-1.5 py-1 focus:outline-none focus:border-blue-500 w-full disabled:opacity-50"
+                                class="bg-gray-800 cursor-pointer border border-gray-700 text-white text-xs rounded px-1.5 py-1 focus:outline-none focus:border-blue-500 w-full disabled:opacity-50"
                               >
                                 <option value="">—</option>
-                                <For each={applicants()}>
-                                  {(applicant) => (
-                                    <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>
-                                  )}
-                                </For>
+                                <For each={applicants()}>{(applicant) => <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>}</For>
                               </select>
                             </td>
                           </>
