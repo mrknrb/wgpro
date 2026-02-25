@@ -77,8 +77,8 @@ export default function Messages(props) {
             <table class="min-w-full border-collapse text-sm">
               <thead>
                 <tr class="bg-gray-800 border-b border-gray-700">
-                  <th class="px-2 py-2 text-gray-400 font-medium text-xs border-r border-gray-700 w-10"></th>
-                  <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-36">Applicant</th>
+                 <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-36">Applicant</th>
+                  <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-10">Chat</th>
                   <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-[320px]">Messages</th>
                   <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-20">My Rating</th>
                   <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-40">My Comment</th>

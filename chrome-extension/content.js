@@ -92,7 +92,7 @@ function parseConversationListPage(doc) {
     }
 
     // Extract last_message_id from link href fragment
-    const link = container?.querySelector('a[href*="nachrichten-id"]')
+    const link = container?.querySelector('a.link-conversation-list[href*="nachrichten-id"]')
     const rawHref = link?.getAttribute('href') || ''
     const fragMatch = rawHref.match(/#last_message_id_(\d+)/)
     const lastMessageId = fragMatch ? fragMatch[1] : null
@@ -103,8 +103,10 @@ function parseConversationListPage(doc) {
       ? hrefNoFrag
       : `${WGG_BASE}${hrefNoFrag}`
 
-    const photoImg = container?.querySelector('img[src^="http"]')
-    const photoUrl = photoImg?.src || null
+    // Photo is in the sibling col-xs-3, so go up to the parent .row
+    const row = container?.parentElement
+    const photoImg = row?.querySelector('img.img-conversation-list') || row?.querySelector('img[src^="http"]')
+    const photoUrl = photoImg?.getAttribute('src') || null
 
     const dateEl = container?.querySelector('.latest_message_timestamp_list')
     const latestDate = dateEl?.textContent?.trim() || null
