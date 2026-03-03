@@ -1,9 +1,35 @@
-import { createSignal, createResource, Show, For, createMemo } from 'solid-js'
+import { createSignal, createResource, Show, For, createMemo, onCleanup } from 'solid-js'
 import { authFetch } from '../../lib/supabase.js'
 import ApplicantRow from '../../components/messages/ApplicantRow.jsx'
 
+const STATUS_ORDER = ['Applied', 'Appointment', 'Casting', 'AfterCasting', 'Accepted', 'Declined']
+
+const SORT_OPTIONS = [
+  { key: 'status-asc',       label: 'Status ↑' },
+  { key: 'status-desc',      label: 'Status ↓' },
+  { key: 'appointment-asc',  label: 'Appointment ↑' },
+  { key: 'appointment-desc', label: 'Appointment ↓' },
+  { key: 'newest-asc',       label: 'Newest Message ↑' },
+  { key: 'newest-desc',      label: 'Newest Message ↓' },
+  { key: 'rating-asc',       label: 'Rating ↑' },
+  { key: 'rating-desc',      label: 'Rating ↓' },
+  { key: 'favourites-asc',   label: 'Favourites ↑' },
+  { key: 'favourites-desc',  label: 'Favourites ↓' },
+]
+
+const STORAGE_KEY = 'messages-sort'
+
+function getSavedSort() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY)
+    if (v && SORT_OPTIONS.some(o => o.key === v)) return v
+  } catch {}
+  return 'newest-desc'
+}
+
 export default function Messages(props) {
-  const [sortBy, setSortBy] = createSignal('newest') // 'newest' | 'myrating'
+  const [sortBy, setSortBy] = createSignal(getSavedSort())
+  const [dropdownOpen, setDropdownOpen] = createSignal(false)
 
   const [data] = createResource(async () => {
     const [applicants, members] = await Promise.all([
@@ -18,29 +44,66 @@ export default function Messages(props) {
   // Track ratings saved in this session so the sort reflects real-time changes
   const [localRatings, setLocalRatings] = createSignal({})
 
-  const sortedApplicants = createMemo(() => {
-    const list = data()?.applicants ?? []
-    if (sortBy() === 'myrating') {
-      const userId = props.currentUser?.id
-      return [...list].sort((a, b) => {
-        const local = localRatings()
-        const rA = a.id in local ? (local[a.id] ?? -1) : (a.ratings?.[userId]?.rating ?? -1)
-        const rB = b.id in local ? (local[b.id] ?? -1) : (b.ratings?.[userId]?.rating ?? -1)
-        return rB - rA
-      })
-    }
-    // newest message
-    return [...list].sort((a, b) => {
-      const dateA = newestMsg(a)
-      const dateB = newestMsg(b)
-      return dateB - dateA
-    })
-  })
+  function setSort(key) {
+    setSortBy(key)
+    try { localStorage.setItem(STORAGE_KEY, key) } catch {}
+    closeDropdown()
+  }
+
+  function openDropdown() {
+    setDropdownOpen(true)
+    setTimeout(() => document.addEventListener('click', closeDropdown), 0)
+  }
+
+  function closeDropdown() {
+    setDropdownOpen(false)
+    document.removeEventListener('click', closeDropdown)
+  }
+
+  onCleanup(() => document.removeEventListener('click', closeDropdown))
 
   function newestMsg(applicant) {
     const dates = (applicant.messages ?? []).map(m => m.sent_at ? new Date(m.sent_at).getTime() : 0)
     return dates.length ? Math.max(...dates) : 0
   }
+
+  const sortedApplicants = createMemo(() => {
+    const list = data()?.applicants ?? []
+    const [field, dir] = sortBy().split('-')
+    const mul = dir === 'asc' ? 1 : -1
+
+    return [...list].sort((a, b) => {
+      if (field === 'status') {
+        const ia = STATUS_ORDER.indexOf(a.status ?? 'Applied')
+        const ib = STATUS_ORDER.indexOf(b.status ?? 'Applied')
+        return mul * (ia - ib)
+      }
+      if (field === 'appointment') {
+        const ta = a.appointment ? new Date(a.appointment.date).getTime() + (a.appointment.hour ?? 0) * 3600000 : null
+        const tb = b.appointment ? new Date(b.appointment.date).getTime() + (b.appointment.hour ?? 0) * 3600000 : null
+        if (ta === null && tb === null) return 0
+        if (ta === null) return 1
+        if (tb === null) return -1
+        return mul * (ta - tb)
+      }
+      if (field === 'newest') {
+        return mul * (newestMsg(a) - newestMsg(b))
+      }
+      if (field === 'rating') {
+        const userId = props.currentUser?.id
+        const local = localRatings()
+        const rA = a.id in local ? (local[a.id] ?? -1) : (a.ratings?.[userId]?.rating ?? -1)
+        const rB = b.id in local ? (local[b.id] ?? -1) : (b.ratings?.[userId]?.rating ?? -1)
+        return mul * (rA - rB)
+      }
+      if (field === 'favourites') {
+        return mul * ((a.favourites ?? []).length - (b.favourites ?? []).length)
+      }
+      return 0
+    })
+  })
+
+  const currentLabel = () => SORT_OPTIONS.find(o => o.key === sortBy())?.label ?? 'Sort'
 
   return (
     <div class="pt-2">
@@ -54,12 +117,26 @@ export default function Messages(props) {
         {/* Sort controls */}
         <div class="flex items-center gap-3 mb-4">
           <span class="text-gray-400 text-sm pl-2">Sort by:</span>
-          <button onClick={() => setSortBy("newest")} class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === "newest" ? "bg-blue-700 text-white" : "text-gray-400 hover:text-white border border-gray-700"}`}>
-            Newest Message
-          </button>
-          <button onClick={() => setSortBy("myrating")} class={`text-sm px-3 py-1 rounded transition-colors ${sortBy() === "myrating" ? "bg-blue-700 text-white" : "text-gray-400 hover:text-white border border-gray-700"}`}>
-            My Rating
-          </button>
+          <div class="relative">
+            <button
+              onClick={openDropdown}
+              class="text-sm px-3 py-1 rounded bg-blue-700 text-white flex items-center gap-1.5"
+            >
+              {currentLabel()} <span class="text-xs opacity-60">▾</span>
+            </button>
+            <Show when={dropdownOpen()}>
+              <div class="absolute z-50 top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded shadow-xl min-w-42.5">
+                <For each={SORT_OPTIONS}>{(opt) => (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSort(opt.key) }}
+                    class={`block w-full text-left text-xs px-3 py-1.5 border-b border-gray-800/50 last:border-0 transition-colors ${sortBy() === opt.key ? 'text-white bg-blue-800 font-semibold' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                  >
+                    {opt.label}
+                  </button>
+                )}</For>
+              </div>
+            </Show>
+          </div>
           <span class="text-gray-600 text-xs ml-auto">
             {sortedApplicants().length} applicant{sortedApplicants().length !== 1 ? "s" : ""}
           </span>
