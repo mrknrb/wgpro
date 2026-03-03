@@ -114,6 +114,38 @@ export default function Appointments(props) {
     }
   }
 
+  async function toggleAllDay(date) {
+    const userId = props.currentUser?.id
+    const userAvail = availabilityMap()[date]?.[userId] ?? {}
+    const allSelected = HOURS.every(h => userAvail[h])
+    const available = !allSelected
+
+    const prev = localAvailability()
+    if (available) {
+      const toAdd = HOURS.filter(h => !userAvail[h]).map(h => ({ date, user_id: userId, hour: h }))
+      setLocalAvailability([...prev, ...toAdd])
+    } else {
+      setLocalAvailability(prev.filter(r => !(r.date === date && r.user_id === userId)))
+    }
+
+    setSaving(`day-${date}`)
+    try {
+      await Promise.all(
+        HOURS.map(h =>
+          authFetch('/api/availability', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: props.sessionId, date, hour: h, available }),
+          })
+        )
+      )
+    } catch (e) {
+      setLocalAvailability(prev)
+      alert(e.message)
+    } finally {
+      setSaving(null)
+    }
+  }
+
   async function bookApplicant(date, hour, applicantId) {
     // Optimistic update — avoids refetch resetting all dropdowns
     const prev = localAppointments()
@@ -164,14 +196,25 @@ export default function Appointments(props) {
                   Time
                 </th>
                 <For each={weekDates()}>
-                  {(date) => (
-                    <th
-                      colspan={members().length + 1}
-                      class={`px-3 py-2 text-center font-medium text-xs border-r ${date === todayStr() ? 'border-blue-600 text-blue-300 bg-blue-950/40' : 'border-gray-600 text-gray-200'}`}
-                    >
-                      {formatDayHeader(date)}
-                    </th>
-                  )}
+                  {(date) => {
+                    const allSelected = () => HOURS.every(h => availabilityMap()[date]?.[props.currentUser?.id]?.[h])
+                    return (
+                      <th
+                        colspan={members().length + 1}
+                        class={`px-3 py-2 text-center font-medium text-xs border-r ${date === todayStr() ? 'border-blue-600 text-blue-300 bg-blue-950/40' : 'border-gray-600 text-gray-200'}`}
+                      >
+                        <div class="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleAllDay(date)}
+                            disabled={saving() === `day-${date}`}
+                            class={`cursor-pointer w-8 h-8 rounded-full border-2 transition-all disabled:opacity-50 shrink-0 ${allSelected() ? 'bg-green-500 border-green-400' : 'bg-transparent border-gray-600 hover:border-green-500'}`}
+                            title={allSelected() ? 'All day selected — click to deselect all' : 'Select all hours'}
+                          />
+                          {formatDayHeader(date)}
+                        </div>
+                      </th>
+                    )
+                  }}
                 </For>
               </tr>
               {/* Member sub-header row */}
