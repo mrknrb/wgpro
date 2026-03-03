@@ -275,12 +275,12 @@ export default function Appointments(props) {
                               }}
                             </For>
                             {/* Booking column */}
-                            <td class={`px-2 py-1.5 border-r border-gray-600 ${isToday ? "bg-blue-950/10" : ""}`}>
+                            <td class={`px-2 py-1.5 border-r border-gray-600 ${booked()?.applicant_id ? "bg-blue-500/20" : isToday ? "bg-blue-950/10" : ""}`}>
                               <select
                                 value={booked()?.applicant_id ?? ""}
                                 onChange={(e) => bookApplicant(date, hour, e.target.value)}
                                 disabled={saving() === `book-${date}-${hour}`}
-                                class="bg-gray-800 cursor-pointer border border-gray-700 text-white text-xs rounded px-1.5 py-1 focus:outline-none focus:border-blue-500 w-full disabled:opacity-50"
+                                class={`cursor-pointer border text-white text-xs rounded px-1.5 py-1 focus:outline-none w-full disabled:opacity-50 ${booked()?.applicant_id ? "bg-blue-900/60 border-blue-600 focus:border-blue-400" : "bg-gray-800 border-gray-700 focus:border-blue-500"}`}
                               >
                                 <option value="">—</option>
                                 <For each={applicants()}>{(applicant) => <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>}</For>
