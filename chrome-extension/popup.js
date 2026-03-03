@@ -146,6 +146,21 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
     ? ''
     : `<div class="warn">Open wg-gesucht.de in a tab and log in before scraping.</div>`
 
+  // Load auto-scrape settings + last scrape time
+  const autoSettings = await chrome.storage.local.get(['auto_scrape_enabled', 'auto_scrape_interval', 'last_scrape_time'])
+  const savedInterval = autoSettings.auto_scrape_interval || 30
+  let autoEnabled = !!autoSettings.auto_scrape_enabled
+  const lastScrapeText = autoSettings.last_scrape_time
+    ? `Last scrape: ${new Date(autoSettings.last_scrape_time).toLocaleString()}`
+    : ''
+  let nextRunText = ''
+  if (autoEnabled) {
+    const alarm = await chrome.alarms.get('auto-scrape')
+    if (alarm) {
+      nextRunText = `Next run: ${new Date(alarm.scheduledTime).toLocaleTimeString()}`
+    }
+  }
+
   document.getElementById('content').innerHTML = `
     <div class="field">
       <label>Session</label>
@@ -157,6 +172,18 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
         Scrape &amp; Sync Messages
       </button>
       <div class="status-box" id="status">Ready.</div>
+      <div id="last-scrape" class="info" style="margin-top:4px; margin-bottom:0; ${lastScrapeText ? '' : 'display:none;'}">${lastScrapeText}</div>
+    </div>
+    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #1f2937;">
+      <label style="color:#e5e5e5; font-size:13px; font-weight:600; display:block; margin-bottom:8px;">Auto-scrape</label>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+        <input type="number" id="interval-input" min="1" max="1440" value="${savedInterval}" style="width:70px; margin-bottom:0;" />
+        <span style="color:#9ca3af; font-size:12px;">min interval</span>
+      </div>
+      <button id="auto-toggle-btn" class="${autoEnabled ? 'auto-off-btn' : 'auto-on-btn'}">
+        ${autoEnabled ? 'Disable Auto-scrape' : 'Enable Auto-scrape'}
+      </button>
+      <div id="auto-next" class="info" style="margin-top:6px; margin-bottom:0; ${autoEnabled && nextRunText ? '' : 'display:none;'}">${nextRunText}</div>
     </div>
   `
 
@@ -164,12 +191,22 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
   const scrapeBtn = document.getElementById('scrape-btn')
   const statusEl = document.getElementById('status')
 
-  // Persist selected session
+  function updateLastScrape() {
+    const now = new Date()
+    const el = document.getElementById('last-scrape')
+    if (el) {
+      el.textContent = `Last scrape: ${now.toLocaleString()}`
+      el.style.display = 'block'
+    }
+  }
+
+  // Persist selected session (including cutoff date, used by background auto-scrape)
   const persistSession = () => {
     const opt = sessionSelect.options[sessionSelect.selectedIndex]
     chrome.storage.local.set({
       selected_session_id: opt.value,
       selected_session_wg_ad_id: opt.getAttribute('data-wg-ad-id'),
+      selected_session_cutoff_date: opt.getAttribute('data-cutoff-date') || null,
     })
   }
   sessionSelect.addEventListener('change', persistSession)
@@ -192,6 +229,7 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
     scrapeBtn.disabled = true
     scrapeBtn.textContent = 'Scraping...'
     statusEl.textContent = 'Starting...'
+    console.log('[WGPro popup] manual scrape: sending START_SCRAPE, sessionId =', sessionId, 'wgAdId =', wgAdId)
 
     // Remove any previous listener
     const listener = (msg) => {
@@ -199,6 +237,8 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
         statusEl.textContent = msg.message
       }
       if (msg.type === 'SCRAPE_DONE') {
+        console.log('[WGPro popup] manual scrape: SCRAPE_DONE, inserted =', msg.inserted)
+        updateLastScrape()
         statusEl.textContent = msg.inserted
           ? `Done! ${msg.inserted} applicant(s) synced.`
           : 'Done! Everything is already up to date.'
@@ -207,6 +247,7 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
         chrome.runtime.onMessage.removeListener(listener)
       }
       if (msg.type === 'SCRAPE_ERROR') {
+        console.warn('[WGPro popup] manual scrape: SCRAPE_ERROR:', msg.message)
         statusEl.textContent = `Error: ${msg.message}`
         scrapeBtn.disabled = false
         scrapeBtn.textContent = 'Scrape & Sync Messages'
@@ -229,6 +270,78 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
       scrapeBtn.disabled = false
       scrapeBtn.textContent = 'Scrape & Sync Messages'
       chrome.runtime.onMessage.removeListener(listener)
+    }
+  })
+
+  // ── Auto-scrape toggle ──────────────────────────────────────────────────────
+  const autoToggleBtn = document.getElementById('auto-toggle-btn')
+  const intervalInput = document.getElementById('interval-input')
+  const autoNextEl = document.getElementById('auto-next')
+
+  autoToggleBtn.addEventListener('click', async () => {
+    const interval = Math.max(1, parseInt(intervalInput.value) || 30)
+
+    if (autoEnabled) {
+      console.log('[WGPro popup] auto-scrape: disabling')
+      await chrome.alarms.clear('auto-scrape')
+      await chrome.storage.local.set({ auto_scrape_enabled: false })
+      autoEnabled = false
+      autoToggleBtn.textContent = 'Enable Auto-scrape'
+      autoToggleBtn.className = 'auto-on-btn'
+      autoNextEl.style.display = 'none'
+    } else {
+      console.log('[WGPro popup] auto-scrape: enabling with interval =', interval, 'min')
+      await chrome.alarms.create('auto-scrape', { periodInMinutes: interval })
+      await chrome.storage.local.set({ auto_scrape_enabled: true, auto_scrape_interval: interval })
+      autoEnabled = true
+      autoToggleBtn.textContent = 'Disable Auto-scrape'
+      autoToggleBtn.className = 'auto-off-btn'
+      const alarm = await chrome.alarms.get('auto-scrape')
+      if (alarm) {
+        autoNextEl.textContent = `Next run: ${new Date(alarm.scheduledTime).toLocaleTimeString()}`
+        autoNextEl.style.display = 'block'
+      }
+
+      // Trigger an immediate first run
+      if (wggTabAvailable) {
+        const opt = sessionSelect.options[sessionSelect.selectedIndex]
+        const wgAdId = opt.getAttribute('data-wg-ad-id')
+        if (wgAdId) {
+          statusEl.textContent = 'Auto-scrape: starting first run...'
+          console.log('[WGPro popup] auto-scrape: immediate first run, wgAdId =', wgAdId)
+          const listener = (msg) => {
+            if (msg.type === 'SCRAPE_PROGRESS') statusEl.textContent = msg.message
+            if (msg.type === 'SCRAPE_DONE') {
+              console.log('[WGPro popup] auto-scrape first run: SCRAPE_DONE, inserted =', msg.inserted)
+              updateLastScrape()
+              statusEl.textContent = msg.inserted
+                ? `Done! ${msg.inserted} applicant(s) synced.`
+                : 'Done! Everything is already up to date.'
+              chrome.runtime.onMessage.removeListener(listener)
+            }
+            if (msg.type === 'SCRAPE_ERROR') {
+              console.warn('[WGPro popup] auto-scrape first run: SCRAPE_ERROR:', msg.message)
+              statusEl.textContent = `Error: ${msg.message}`
+              chrome.runtime.onMessage.removeListener(listener)
+            }
+          }
+          chrome.runtime.onMessage.addListener(listener)
+          try {
+            await chrome.tabs.sendMessage(wggTabId, {
+              type: 'START_SCRAPE',
+              token,
+              sessionId: opt.value,
+              wgAdId,
+              cutoffDate: opt.getAttribute('data-cutoff-date') || null,
+              appUrl: APP_URL,
+            })
+          } catch (e) {
+            console.warn('[WGPro popup] auto-scrape first run: could not reach content script:', e.message)
+            statusEl.textContent = `Auto-scrape: could not reach content script: ${e.message}`
+            chrome.runtime.onMessage.removeListener(listener)
+          }
+        }
+      }
     }
   })
 }

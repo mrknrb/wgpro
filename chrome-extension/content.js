@@ -225,9 +225,11 @@ async function uploadApplicants(sessionId, applicantsData) {
 // ─── Main scrape flow ─────────────────────────────────────────────────────────
 
 async function startScrape(sessionId, wgAdId, cutoffDate) {
+  console.log('[WGPro content] startScrape starting — sessionId:', sessionId, 'wgAdId:', wgAdId, 'cutoffDate:', cutoffDate)
   try {
     sendProgress('Loading known messages from app...')
     const knownLastMessages = await getKnownLastMessages(sessionId)
+    console.log('[WGPro content] known conversations with messages:', Object.keys(knownLastMessages).length)
 
     // Parse cutoff as a comparable ISO date string (e.g. "2025-02-01")
     const cutoff = cutoffDate || null
@@ -250,6 +252,7 @@ async function startScrape(sessionId, wgAdId, cutoffDate) {
 
       const listDoc = await fetchHtmlDoc(listUrl)
       const conversations = parseConversationListPage(listDoc)
+      console.log(`[WGPro content] page ${page}: parsed ${conversations.length} conversation(s)`)
 
       if (!conversations.length) {
         sendProgress(`Page ${page} is empty. Done scanning.`)
@@ -339,6 +342,8 @@ async function startScrape(sessionId, wgAdId, cutoffDate) {
       await delay(500)
     }
 
+    console.log(`[WGPro content] scan complete — total convs: ${totalConvs}, to upload: ${applicantsData.length}, skipped: ${skipped}`)
+
     if (!applicantsData.length) {
       sendProgress(`All ${totalConvs} conversation(s) are up to date. Nothing to upload.`)
       chrome.runtime.sendMessage({ type: 'SCRAPE_DONE', inserted: 0 })
@@ -346,12 +351,15 @@ async function startScrape(sessionId, wgAdId, cutoffDate) {
     }
 
     sendProgress(`Uploading ${applicantsData.length} applicant(s)...`)
+    console.log('[WGPro content] uploading', applicantsData.length, 'applicant(s)...')
     const result = await uploadApplicants(sessionId, applicantsData)
+    console.log('[WGPro content] upload result:', result)
     chrome.runtime.sendMessage({
       type: 'SCRAPE_DONE',
       inserted: result.insertedApplicants ?? applicantsData.length,
     })
   } catch (e) {
+    console.error('[WGPro content] startScrape error:', e)
     sendError(e.message)
   }
 }
@@ -360,6 +368,7 @@ async function startScrape(sessionId, wgAdId, cutoffDate) {
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'START_SCRAPE') {
+    console.log('[WGPro content] START_SCRAPE received — sessionId:', message.sessionId, 'wgAdId:', message.wgAdId, 'cutoffDate:', message.cutoffDate)
     appUrl = message.appUrl
     authToken = message.token
     startScrape(message.sessionId, message.wgAdId, message.cutoffDate || null)

@@ -5,6 +5,7 @@
   "description": "Scrape WG Gesucht messages and sync them to WGPro sessions.",
   "permissions": [
     "activeTab",
+    "alarms",
     "storage",
     "scripting",
     "tabs"
