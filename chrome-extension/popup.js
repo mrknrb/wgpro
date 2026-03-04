@@ -166,6 +166,14 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
       <label>Session</label>
       <select id="session-select">${options.join('')}</select>
     </div>
+    <div class="field" style="margin-top:4px;">
+      <label>Cutoff date <span style="color:#6b7280; font-weight:400;">(skip messages before)</span></label>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input type="date" id="cutoff-input" style="margin-bottom:0; flex:1;" />
+        <button id="cutoff-save-btn" style="width:auto; padding:8px 12px; font-size:12px;">Save</button>
+      </div>
+      <div id="cutoff-status" class="info" style="margin-top:4px; margin-bottom:0; display:none;"></div>
+    </div>
     ${tabWarning}
     <div class="scrape-section">
       <button class="scrape-btn" id="scrape-btn" ${!wggTabAvailable ? 'disabled' : ''}>
@@ -212,6 +220,42 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
   sessionSelect.addEventListener('change', persistSession)
   // Persist on load if a session is already selected
   if (sessions.length) persistSession()
+
+  // ── Cutoff date ─────────────────────────────────────────────────────────────
+  const cutoffInput = document.getElementById('cutoff-input')
+  const cutoffSaveBtn = document.getElementById('cutoff-save-btn')
+  const cutoffStatus = document.getElementById('cutoff-status')
+
+  function updateCutoffInput() {
+    const opt = sessionSelect.options[sessionSelect.selectedIndex]
+    cutoffInput.value = opt.getAttribute('data-cutoff-date') || ''
+  }
+  updateCutoffInput()
+  sessionSelect.addEventListener('change', updateCutoffInput)
+
+  cutoffSaveBtn.addEventListener('click', async () => {
+    const opt = sessionSelect.options[sessionSelect.selectedIndex]
+    const sessionId = opt.value
+    const newCutoff = cutoffInput.value || null
+    cutoffSaveBtn.disabled = true
+    cutoffStatus.textContent = 'Saving...'
+    cutoffStatus.style.display = 'block'
+    try {
+      const res = await fetch(`${APP_URL}/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scrape_cutoff_date: newCutoff }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error || 'Save failed')
+      opt.setAttribute('data-cutoff-date', newCutoff || '')
+      persistSession()
+      cutoffStatus.textContent = 'Saved!'
+      setTimeout(() => { cutoffStatus.style.display = 'none' }, 2000)
+    } catch (e) {
+      cutoffStatus.textContent = `Error: ${e.message}`
+    }
+    cutoffSaveBtn.disabled = false
+  })
 
   if (!wggTabAvailable) return
 
