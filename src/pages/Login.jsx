@@ -1,9 +1,11 @@
 import { createSignal } from 'solid-js'
-import { A, useNavigate } from '@solidjs/router'
+import { A, useNavigate, useSearchParams } from '@solidjs/router'
 import { supabase } from '../lib/supabase.js'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [search] = useSearchParams()
+  const redirect = search.redirect
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
   const [error, setError] = createSignal('')
@@ -19,7 +21,7 @@ export default function Login() {
         password: password(),
       })
       if (err) throw err
-      navigate('/', { replace: true })
+      navigate(redirect || '/', { replace: true })
     } catch (err) {
       setError(err.message || 'Login failed')
     } finally {
@@ -30,7 +32,11 @@ export default function Login() {
   return (
     <div class="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div class="w-full max-w-sm">
-        <h1 class="text-white text-2xl font-bold mb-6 text-center">WGPro</h1>
+        
+        <h1 class="text-white text-2xl font-bold mb-6 flex items-center justify-center gap-2">
+          <img src="/vite.svg" class="w-7 h-7" alt="logo" />
+          WGPro
+        </h1>
         <div class="bg-gray-900 rounded-xl border border-gray-700 p-6">
           <h2 class="text-white text-lg font-semibold mb-4">Sign in</h2>
           <form onSubmit={handleSubmit} class="flex flex-col gap-4">
@@ -67,7 +73,7 @@ export default function Login() {
           </form>
           <p class="text-gray-500 text-sm mt-4 text-center">
             No account?{' '}
-            <A href="/register" class="text-blue-400 hover:text-blue-300">Register</A>
+            <A href={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'} class="text-blue-400 hover:text-blue-300">Register</A>
           </p>
         </div>
       </div>

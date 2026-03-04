@@ -1,4 +1,4 @@
-import { createSignal, createResource, Show } from 'solid-js'
+import { createSignal, createResource, createEffect, Show } from 'solid-js'
 import { useParams, useSearchParams, useNavigate } from '@solidjs/router'
 import { authFetch, supabase } from '../lib/supabase.js'
 
@@ -7,10 +7,12 @@ export default function JoinRequest() {
   const [search] = useSearchParams()
   const navigate = useNavigate()
   const token = search.token
+  const autoJoin = search.autoJoin
 
   const [requesting, setRequesting] = createSignal(false)
   const [done, setDone] = createSignal(false)
   const [error, setError] = createSignal('')
+  const [countdown, setCountdown] = createSignal(10)
 
   const [sessionInfo] = createResource(async () => {
     if (!token) return null
@@ -19,10 +21,21 @@ export default function JoinRequest() {
     return res.json()
   })
 
+  let autoJoinTriggered = false
+  createEffect(() => {
+    const info = sessionInfo()
+    if (!info || !autoJoin || autoJoinTriggered) return
+    autoJoinTriggered = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) requestJoin()
+    })
+  })
+
   async function requestJoin() {
     const { data } = await supabase.auth.getSession()
     if (!data.session) {
-      navigate(`/login?redirect=/session/${params.id}/join?token=${token}`)
+      const redirectUrl = `/session/${params.id}/join?token=${token}&autoJoin=1`
+      navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
       return
     }
     setRequesting(true)
@@ -33,6 +46,8 @@ export default function JoinRequest() {
         body: JSON.stringify({ token }),
       })
       setDone(true)
+      const interval = setInterval(() => setCountdown(c => c - 1), 1000)
+      setTimeout(() => { clearInterval(interval); navigate('/') }, 10000)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -44,10 +59,10 @@ export default function JoinRequest() {
     <div class="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div class="w-full max-w-sm">
         
-        <h1 class="text-white text-2xl font-bold mb-6 flex items-center justify-center gap-2">
+        <a href="/" class="text-white text-2xl font-bold mb-6 flex items-center justify-center gap-2">
           <img src="/vite.svg" class="w-7 h-7" alt="logo" />
           WGPro
-        </h1>
+        </a>
         <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
           <Show when={!token}>
             <p class="text-red-400">Invalid invite link.</p>
@@ -79,6 +94,7 @@ export default function JoinRequest() {
                 <div class="text-green-400 text-4xl mb-3">✓</div>
                 <h2 class="text-white font-bold text-lg mb-2">Request sent!</h2>
                 <p class="text-gray-400 text-sm">The session admin will review your request. You'll be able to access it once approved.</p>
+                <p class="text-gray-500 text-xs mt-3">Redirecting to home in {countdown()}s...</p>
               </div>
             </Show>
           </Show>
