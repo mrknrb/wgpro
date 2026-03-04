@@ -15,6 +15,7 @@ import applicantStatusHandler from './_routes/applicant-status.js'
 import applicantAiRateHandler from './_routes/applicant-ai-rate.js'
 import scrapeUploadHandler from './_routes/scrape-upload.js'
 import availabilityHandler from './_routes/availability.js'
+import joinRequestsHandler from './_routes/join-requests.js'
 
 const app = express()
 
@@ -53,5 +54,8 @@ app.all('/api/scrape/upload', scrapeUploadHandler)
 
 // Availability
 app.all('/api/availability', availabilityHandler)
+
+// User's own join requests
+app.all('/api/join-requests', joinRequestsHandler)
 
 export default app

@@ -15,6 +15,10 @@ export default function Home() {
     return authFetch('/api/sessions')
   })
 
+  const [pendingRequests] = createResource(async () => {
+    return authFetch('/api/join-requests')
+  })
+
   async function createSession(e) {
     e.preventDefault()
     setCreateError('')
@@ -94,6 +98,22 @@ export default function Home() {
             )}
           </For>
         </div>
+
+        <Show when={pendingRequests() && pendingRequests().length > 0}>
+          <div class="mt-10">
+            <h2 class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-3">Pending Join Requests</h2>
+            <div class="flex flex-col gap-2">
+              <For each={pendingRequests()}>
+                {(req) => (
+                  <div class="bg-gray-900 border border-gray-700 rounded-xl px-5 py-4 flex items-center justify-between">
+                    <span class="text-white text-sm font-medium">{req.sessions?.name}</span>
+                    <span class="text-xs text-yellow-500 font-semibold">Awaiting approval</span>
+                  </div>
+                )}
+              </For>
+            </div>
+          </div>
+        </Show>
       </main>
 
       {/* Create Session Modal */}
