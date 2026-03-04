@@ -9,27 +9,24 @@ export default function Register() {
   const [password, setPassword] = createSignal('')
   const [confirm, setConfirm] = createSignal('')
   const [error, setError] = createSignal('')
-  const [success, setSuccess] = createSignal('')
   const [loading, setLoading] = createSignal(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    setSuccess('')
     if (password() !== confirm()) {
       setError('Passwords do not match')
       return
     }
     setLoading(true)
     try {
-      const { data: signUpData, error: err } = await supabase.auth.signUp({
+      const { error: err } = await supabase.auth.signUp({
         email: email(),
         password: password(),
         options: { data: { username: username() } },
       })
-      console.log('signUp result:', JSON.stringify({ data: signUpData, err }, null, 2))
       if (err) throw err
-      setSuccess('Account created! Check your email to confirm, then log in.')
+      navigate('/')
     } catch (err) {
       setError(err.message || 'Registration failed')
     } finally {
@@ -89,7 +86,6 @@ export default function Register() {
               />
             </div>
             {error() && <p class="text-red-400 text-sm">{error()}</p>}
-            {success() && <p class="text-green-400 text-sm">{success()}</p>}
             <button
               type="submit"
               disabled={loading()}
