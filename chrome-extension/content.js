@@ -37,7 +37,7 @@ function parseGermanDate(str) {
   if (!str) return null
   const m = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
   if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
-  return str
+  return null
 }
 
 function delay(ms) {
@@ -179,7 +179,7 @@ function parseMessagesFromDoc(doc, knownLastMessageId) {
       wg_message_id: msgId,
       is_from_applicant: !isOwnMessage,
       content,
-      sent_at: parseGermanDate(sentAt),
+      sent_at: parseGermanDate(sentAt) ?? new Date().toISOString(),
     })
   }
   return messages
