@@ -25,13 +25,13 @@ export default function ApplicantRow(props) {
 
       {/* Applicant info */}
       <td
-        onClick={() => applicant().profile_url && window.open(applicant().profile_url, "_blank")}
-        class={`border-r border-gray-800 px-3 py-2 align-top w-36 min-w-36 ${applicant().profile_url ? "cursor-pointer" : ""}`}
+        onClick={() => applicant().wg_conversation_id && window.open(`https://www.wg-gesucht.de/nachricht.html?nachrichten-id=${applicant().wg_conversation_id}&list=1`, "_blank")}
+        class={`border-r border-gray-800 px-3 py-2 align-top w-36 min-w-36 ${applicant().wg_conversation_id ? "cursor-pointer" : ""}`}
       >
         <div class={!expanded() ? "overflow-hidden max-h-6" : " "}>
           <div class="flex items-center gap-2 mb-1">
             {applicant().photo_url && <img src={applicant().photo_url} alt="" class="w-6 h-6 rounded-full object-cover shrink-0" />}
-            <p class={`text-sm font-medium truncate ${applicant().profile_url ? "text-blue-400" : "text-gray-200"}`}>{applicant().name || "Unknown"}</p>
+            <p class={`text-sm font-medium truncate ${applicant().wg_conversation_id ? "text-blue-400" : "text-gray-200"}`}>{applicant().name || "Unknown"}</p>
           </div>
           {expanded() && newestMessageDate() && <p class="text-gray-600 text-xs">Last: {newestMessageDate()}</p>}
         </div>
