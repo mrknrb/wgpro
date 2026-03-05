@@ -82,6 +82,15 @@ export default function Appointments(props) {
     return result
   })
 
+  // set of dates that have at least one booked applicant
+  const datesWithBooking = createMemo(() => {
+    const result = new Set()
+    for (const row of localAppointments()) {
+      if (row.applicant_id) result.add(row.date)
+    }
+    return result
+  })
+
   const isCurrentUser = (userId) => userId === props.currentUser?.id
 
   async function toggleAvailability(date, hour) {
@@ -151,7 +160,7 @@ export default function Appointments(props) {
     const prev = localAppointments()
     setLocalAppointments([
       ...prev.filter((a) => !(a.date === date && a.hour === hour)),
-      ...(applicantId ? [{ date, hour, applicant_id: applicantId }] : []),
+      ...(applicantId ? [{ date, hour, applicant_id: applicantId, is_online: false }] : []),
     ])
     setSaving(`book-${date}-${hour}`)
     try {
@@ -165,6 +174,25 @@ export default function Appointments(props) {
       })
     } catch (e) {
       setLocalAppointments(prev) // revert on error
+      alert(e.message)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  async function toggleOnline(date, hour) {
+    const current = appointmentsMap()[date]?.[hour]
+    if (!current) return
+    const prev = localAppointments()
+    setLocalAppointments(prev.map(a => a.date === date && a.hour === hour ? { ...a, is_online: !a.is_online } : a))
+    setSaving(`online-${date}-${hour}`)
+    try {
+      await authFetch(`/api/sessions/${props.sessionId}/appointments`, {
+        method: 'PATCH',
+        body: JSON.stringify({ date, hour, is_online: !current.is_online }),
+      })
+    } catch (e) {
+      setLocalAppointments(prev)
       alert(e.message)
     } finally {
       setSaving(null)
@@ -200,7 +228,7 @@ export default function Appointments(props) {
                     const allSelected = () => HOURS.every(h => availabilityMap()[date]?.[props.currentUser?.id]?.[h])
                     return (
                       <th
-                        colspan={members().length + 1}
+                        colspan={members().length + 1 + (datesWithBooking().has(date) ? 1 : 0)}
                         class={`px-3 py-2 text-center font-medium text-xs border-r ${date === todayStr() ? 'border-blue-600 text-blue-300 bg-blue-950/40' : 'border-gray-600 text-gray-200'}`}
                       >
                         <div class="flex items-center gap-2">
@@ -236,6 +264,11 @@ export default function Appointments(props) {
                       <th class={`px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-600 min-w-32.5 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
                         Booked
                       </th>
+                      <Show when={datesWithBooking().has(date)}>
+                        <th class={`px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-600 w-10 ${date === todayStr() ? 'bg-blue-950/20' : ''}`}>
+                          Online
+                        </th>
+                      </Show>
                     </>
                   )}
                 </For>
@@ -286,6 +319,19 @@ export default function Appointments(props) {
                                 <For each={applicants()}>{(applicant) => <option value={applicant.id}>{applicant.name || applicant.wg_conversation_id}</option>}</For>
                               </select>
                             </td>
+                            {/* Online column */}
+                            <Show when={datesWithBooking().has(date)}>
+                              <td class={`px-2 py-1.5 border-r border-gray-600 text-center ${isToday ? "bg-blue-950/10" : ""}`}>
+                                <Show when={booked()?.applicant_id}>
+                                  <button
+                                    onClick={() => toggleOnline(date, hour)}
+                                    disabled={saving() === `online-${date}-${hour}`}
+                                    class={`cursor-pointer w-6 h-6 rounded-full border-2 transition-all disabled:opacity-50 mx-auto block ${booked()?.is_online ? "bg-purple-500 border-purple-400" : "bg-transparent border-gray-600 hover:border-purple-500"}`}
+                                    title={booked()?.is_online ? "Online — click to set as in-person" : "In-person — click to set as online"}
+                                  />
+                                </Show>
+                              </td>
+                            </Show>
                           </>
                         )
                       }}

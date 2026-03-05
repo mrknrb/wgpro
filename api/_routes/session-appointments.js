@@ -19,7 +19,7 @@ export default withCors(async function handler(req, res) {
     if (req.method === 'GET') {
       let query = supabase
         .from('applicant_appointments')
-        .select('id, applicant_id, date, hour, booked_by, applicants(name, wg_conversation_id)')
+        .select('id, applicant_id, date, hour, is_online, booked_by, applicants(name, wg_conversation_id)')
         .eq('session_id', id)
 
       if (date) query = query.eq('date', date)
@@ -50,9 +50,22 @@ export default withCors(async function handler(req, res) {
           applicant_id,
           date: d,
           hour,
+          is_online: false,
           booked_by: user.id,
         }, { onConflict: 'session_id,date,hour' })
 
+      if (error) return err(res, 500, error.message)
+      return send(res, 200, { ok: true })
+    }
+
+    if (req.method === 'PATCH') {
+      const { date: d, hour, is_online } = req.body
+      const { error } = await supabase
+        .from('applicant_appointments')
+        .update({ is_online })
+        .eq('session_id', id)
+        .eq('date', d)
+        .eq('hour', hour)
       if (error) return err(res, 500, error.message)
       return send(res, 200, { ok: true })
     }
