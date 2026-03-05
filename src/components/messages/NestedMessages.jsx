@@ -8,18 +8,18 @@ export default function NestedMessages(props) {
   }
 
   return (
-    <table class="w-full text-xs border-collapse">
+    <table class="w-full text-xs border-collapse table-fixed">
       <tbody>
         <For each={props.messages}>
           {(msg) => (
             <tr class={`border-b border-gray-800 last:border-0 ${msg.is_from_applicant ? 'bg-transparent' : 'bg-gray-800/40'}`}>
-              <td class="py-1 px-2 text-gray-500 whitespace-nowrap w-28 align-top">
+              <td class="py-1 px-2 text-gray-500 whitespace-nowrap w-8 align-top">
                 {formatTime(msg.sent_at)}
               </td>
-              <td class="py-1 px-2 text-gray-400 whitespace-nowrap w-24 align-top font-medium">
+              <td class="py-1 px-2 text-gray-400 whitespace-nowrap w-16 align-top font-medium">
                 {msg.sender_name || (msg.is_from_applicant ? 'Applicant' : 'You')}
               </td>
-              <td class={`py-1 px-2 text-gray-200 align-top ${!props.expanded ? 'overflow-hidden max-h-5 whitespace-nowrap' : 'whitespace-pre-wrap'}`}>
+              <td class={`py-1 px-2 text-gray-200 w-80 align-top ${!props.expanded ? 'overflow-hidden max-h-5 whitespace-nowrap' : 'whitespace-pre-wrap'}`}>
                 <div class={!props.expanded ? 'overflow-hidden text-ellipsis whitespace-nowrap max-w-xs' : ''}>
                   {msg.content}
                 </div>

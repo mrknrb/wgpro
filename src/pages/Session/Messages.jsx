@@ -12,9 +12,9 @@ const SORT_OPTIONS = [
   { key: 'newest-asc',       label: 'Newest Message ↑' },
   { key: 'newest-desc',      label: 'Newest Message ↓' },
   { key: 'rating-asc',       label: 'Rating ↑' },
-  { key: 'rating-desc',      label: 'Rating ↓' },
+  { key: 'rating-desc',      label: 'Rating ↓' },/*
   { key: 'favourites-asc',   label: 'Favourites ↑' },
-  { key: 'favourites-desc',  label: 'Favourites ↓' },
+  { key: 'favourites-desc',  label: 'Favourites ↓' },*/
 ]
 
 const STORAGE_KEY = 'messages-sort'
@@ -118,22 +118,24 @@ export default function Messages(props) {
         <div class="flex items-center gap-3 mb-4">
           <span class="text-gray-400 text-sm pl-2">Sort by:</span>
           <div class="relative">
-            <button
-              onClick={openDropdown}
-              class="text-sm px-3 py-1 rounded bg-blue-700 text-white flex items-center gap-1.5"
-            >
+            <button onClick={openDropdown} class="text-sm px-3 py-1 rounded bg-blue-700 text-white flex items-center gap-1.5">
               {currentLabel()} <span class="text-xs opacity-60">▾</span>
             </button>
             <Show when={dropdownOpen()}>
               <div class="absolute z-50 top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded shadow-xl min-w-42.5">
-                <For each={SORT_OPTIONS}>{(opt) => (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setSort(opt.key) }}
-                    class={`block w-full text-left text-xs px-3 py-1.5 border-b border-gray-800/50 last:border-0 transition-colors ${sortBy() === opt.key ? 'text-white bg-blue-800 font-semibold' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
-                  >
-                    {opt.label}
-                  </button>
-                )}</For>
+                <For each={SORT_OPTIONS}>
+                  {(opt) => (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSort(opt.key)
+                      }}
+                      class={`block w-full text-left text-xs px-3 py-1.5 border-b border-gray-800/50 last:border-0 transition-colors ${sortBy() === opt.key ? "text-white bg-blue-800 font-semibold" : "text-gray-400 hover:text-white hover:bg-gray-800"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  )}
+                </For>
               </div>
             </Show>
           </div>
@@ -161,11 +163,14 @@ export default function Messages(props) {
                   <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-28">Appointment</th>
                   <th class="px-2 py-2 text-center text-gray-400 font-medium text-xs border-r border-gray-700 w-20">Rating (private)</th>
                   <th class="px-2 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 min-w-40">Comment (private)</th>
-                  <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs min-w-32">Favourites</th>
+                  {/* The main scrollable table <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs min-w-32">Favourites</th>
+                   */}{" "}
                 </tr>
               </thead>
               <tbody>
-                <For each={sortedApplicants()}>{(applicant, idx) => <ApplicantRow applicant={applicant} members={members()} currentUserId={props.currentUser?.id} rowIndex={idx()} onRatingSaved={(r) => setLocalRatings(prev => ({ ...prev, [applicant.id]: r.rating === '' ? null : Number(r.rating) }))} />}</For>
+                <For each={sortedApplicants()}>
+                  {(applicant, idx) => <ApplicantRow applicant={applicant} members={members()} currentUserId={props.currentUser?.id} rowIndex={idx()} onRatingSaved={(r) => setLocalRatings((prev) => ({ ...prev, [applicant.id]: r.rating === "" ? null : Number(r.rating) }))} />}
+                </For>
               </tbody>
             </table>
           </div>

@@ -55,7 +55,7 @@ export default function RatingCell(props) {
         </div>
       </td>
       {/* Comment cell */}
-      <td class={`${cellClass} min-w-[160px]`}>
+      <td class={`${cellClass} min-w-[240px]`}>
         <div class={!props.expanded ? 'overflow-hidden max-h-6' : ''}>
           {isOwn() ? (
             <textarea

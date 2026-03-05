@@ -52,8 +52,9 @@ export default function ApplicantRow(props) {
       {/* Own rating + comment (private) */}
       <RatingCell applicantId={applicant().id} userId={props.currentUserId} currentUserId={props.currentUserId} initialRating={ownRating().rating ?? ""} initialComment={ownRating().comment ?? ""} expanded={expanded()} onSave={props.onRatingSaved} />
 
-      {/* Favourites (public — shows all members) */}
-      <FavouriteCell applicantId={applicant().id} members={props.members} currentUserId={props.currentUserId} favourites={applicant().favourites ?? []} expanded={expanded()} />
+      {/* Favourites (public — shows all members)
+             <FavouriteCell applicantId={applicant().id} members={props.members} currentUserId={props.currentUserId} favourites={applicant().favourites ?? []} expanded={expanded()} />
+  */}
     </tr>
   )
 }
