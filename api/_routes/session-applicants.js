@@ -93,12 +93,7 @@ export default withCors(async function handler(req, res) {
 
       const { data, error } = await supabase
         .from('applicants')
-        .insert({
-          session_id: id,
-          wg_conversation_id: `manual-${crypto.randomUUID()}`,
-          name: name.trim(),
-          profile_url: profile_url?.trim() || null,
-        })
+        .insert({ session_id: id, name: name.trim(), profile_url: profile_url?.trim() || null })
         .select('id')
         .single()
 
