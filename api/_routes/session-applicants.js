@@ -87,6 +87,25 @@ export default withCors(async function handler(req, res) {
       return send(res, 200, enriched)
     }
 
+    if (req.method === 'POST') {
+      const { name, profile_url } = req.body ?? {}
+      if (!name?.trim()) return err(res, 400, 'name is required')
+
+      const { data, error } = await supabase
+        .from('applicants')
+        .insert({
+          session_id: id,
+          wg_conversation_id: `manual-${crypto.randomUUID()}`,
+          name: name.trim(),
+          profile_url: profile_url?.trim() || null,
+        })
+        .select('id')
+        .single()
+
+      if (error) return err(res, 500, error.message)
+      return send(res, 201, data)
+    }
+
     return err(res, 405, 'Method not allowed')
   } catch (e) {
     return err(res, 401, e.message)

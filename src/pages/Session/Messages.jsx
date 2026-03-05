@@ -2,6 +2,72 @@ import { createSignal, createResource, Show, For, createMemo, onCleanup } from '
 import { authFetch } from '../../lib/supabase.js'
 import ApplicantRow from '../../components/messages/ApplicantRow.jsx'
 
+function AddApplicantModal(props) {
+  const [name, setName] = createSignal('')
+  const [url, setUrl] = createSignal('')
+  const [loading, setLoading] = createSignal(false)
+  const [error, setError] = createSignal('')
+
+  async function submit(e) {
+    e.preventDefault()
+    if (!name().trim()) return
+    setLoading(true)
+    setError('')
+    try {
+      await authFetch(`/api/sessions/${props.sessionId}/applicants`, {
+        method: 'POST',
+        body: JSON.stringify({ name: name().trim(), profile_url: url().trim() || undefined }),
+      })
+      props.onSuccess()
+      props.onClose()
+    } catch (err) {
+      setError(err.message ?? 'Failed to add applicant')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={props.onClose}>
+      <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <h2 class="text-white font-semibold text-base mb-4">Add Applicant</h2>
+        <form onSubmit={submit} class="flex flex-col gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Name <span class="text-red-400">*</span></label>
+            <input
+              type="text"
+              value={name()}
+              onInput={(e) => setName(e.target.value)}
+              placeholder="Applicant name"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              autofocus
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Link <span class="text-gray-600">(optional)</span></label>
+            <input
+              type="url"
+              value={url()}
+              onInput={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <Show when={error()}>
+            <p class="text-red-400 text-xs">{error()}</p>
+          </Show>
+          <div class="flex gap-2 justify-end pt-1">
+            <button type="button" onClick={props.onClose} class="text-sm px-3 py-1.5 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">Cancel</button>
+            <button type="submit" disabled={loading() || !name().trim()} class="text-sm px-3 py-1.5 rounded bg-blue-700 text-white hover:bg-blue-600 disabled:opacity-50">
+              {loading() ? 'Adding…' : 'Add'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 const STATUS_ORDER = ['Applied', 'Appointment', 'Casting', 'AfterCasting', 'Accepted', 'Declined']
 
 const SORT_OPTIONS = [
@@ -30,8 +96,9 @@ function getSavedSort() {
 export default function Messages(props) {
   const [sortBy, setSortBy] = createSignal(getSavedSort())
   const [dropdownOpen, setDropdownOpen] = createSignal(false)
+  const [addOpen, setAddOpen] = createSignal(false)
 
-  const [data] = createResource(async () => {
+  const [data, { refetch }] = createResource(async () => {
     const [applicants, members] = await Promise.all([
       authFetch(`/api/sessions/${props.sessionId}/applicants`),
       authFetch(`/api/sessions/${props.sessionId}/members`),
@@ -139,10 +206,16 @@ export default function Messages(props) {
               </div>
             </Show>
           </div>
-          <span class="text-gray-600 text-xs ml-auto">
+          <button onClick={() => setAddOpen(true)} class="ml-auto text-sm px-3 py-1 rounded bg-gray-700 text-gray-200 hover:bg-gray-600">
+            + Add Applicant
+          </button>
+          <span class="text-gray-600 text-xs">
             {sortedApplicants().length} applicant{sortedApplicants().length !== 1 ? "s" : ""}
           </span>
         </div>
+        <Show when={addOpen()}>
+          <AddApplicantModal sessionId={props.sessionId} onClose={() => setAddOpen(false)} onSuccess={refetch} />
+        </Show>
 
         <Show when={sortedApplicants().length === 0}>
           <div class="text-center py-16 text-gray-500">
