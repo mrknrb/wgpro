@@ -6,8 +6,41 @@ const app = document.getElementById('app')
 
 async function getStoredAuth() {
   return new Promise(resolve => {
-    chrome.storage.local.get(['access_token', 'user_email', 'selected_session_id', 'selected_session_wg_ad_id'], resolve)
+    chrome.storage.local.get(['access_token', 'refresh_token', 'user_email', 'selected_session_id', 'selected_session_wg_ad_id'], resolve)
   })
+}
+
+async function refreshAccessToken(refreshToken) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+  if (!res.ok) throw new Error('Session expired — please log in again')
+  const data = await res.json()
+  await chrome.storage.local.set({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  })
+  return data.access_token
+}
+
+// Fetch with automatic token refresh on 401
+async function authFetch(url, opts = {}) {
+  const stored = await getStoredAuth()
+  let token = stored.access_token
+
+  const doFetch = (t) => fetch(url, {
+    ...opts,
+    headers: { ...opts.headers, 'Authorization': `Bearer ${t}` },
+  })
+
+  let res = await doFetch(token)
+  if (res.status === 401 && stored.refresh_token) {
+    token = await refreshAccessToken(stored.refresh_token)
+    res = await doFetch(token)
+  }
+  return { res, token }
 }
 
 async function render() {
@@ -15,7 +48,7 @@ async function render() {
   if (!stored.access_token) {
     renderLogin()
   } else {
-    renderMain(stored.user_email, stored.access_token, stored.selected_session_id, stored.selected_session_wg_ad_id)
+    renderMain(stored.user_email, stored.access_token, stored.selected_session_id)
   }
 }
 
@@ -73,7 +106,7 @@ function renderLogin() {
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
-async function renderMain(email, token, savedSessionId, savedWgAdId) {
+async function renderMain(email, token, savedSessionId) {
   app.innerHTML = `
     <div class="user-bar">
       <span class="user-email">${email}</span>
@@ -92,9 +125,8 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
   // Load sessions from app API
   let sessions = []
   try {
-    const res = await fetch(`${APP_URL}/api/sessions`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    })
+    const { res, token: freshToken } = await authFetch(`${APP_URL}/api/sessions`)
+    token = freshToken
     if (!res.ok) throw new Error('Failed to load sessions')
     sessions = await res.json()
   } catch (e) {
@@ -102,7 +134,7 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
       <div class="error">Could not load sessions: ${e.message}</div>
       <button id="retry-btn" style="margin-top:8px">Retry</button>
     `
-    document.getElementById('retry-btn').addEventListener('click', () => renderMain(email, token, savedSessionId, savedWgAdId))
+    document.getElementById('retry-btn').addEventListener('click', () => render())
     return
   }
 
@@ -241,11 +273,12 @@ async function renderMain(email, token, savedSessionId, savedWgAdId) {
     cutoffStatus.textContent = 'Saving...'
     cutoffStatus.style.display = 'block'
     try {
-      const res = await fetch(`${APP_URL}/api/sessions/${sessionId}`, {
+      const { res, token: freshToken } = await authFetch(`${APP_URL}/api/sessions/${sessionId}`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scrape_cutoff_date: newCutoff }),
       })
+      token = freshToken
       if (!res.ok) throw new Error((await res.json()).error || 'Save failed')
       opt.setAttribute('data-cutoff-date', newCutoff || '')
       persistSession()

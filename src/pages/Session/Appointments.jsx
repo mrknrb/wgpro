@@ -44,8 +44,8 @@ export default function Appointments(props) {
     }
   })
 
-  const weekDates = createMemo(() =>
-    Array.from({ length: 7 }, (_, i) => addDays(startDate(), i))
+  const datesInterval = createMemo(() =>
+    Array.from({ length: 21 }, (_, i) => addDays(startDate(), i))
   )
 
   const [data] = createResource(startDate, async () => {
@@ -177,9 +177,9 @@ export default function Appointments(props) {
         <p class="text-red-400 py-8 text-center">Error loading appointments.</p>
       </Show>
 
-      {/* Week start picker */}
+      {/* Start picker */}
       <div class="flex items-center gap-4 mb-6">
-        <label class="text-gray-400 text-sm font-medium">Week from:</label>
+        <label class="text-gray-400 text-sm font-medium">From:</label>
         <DateSelect value={startDate()} onInput={(e) => setStartDatePersist(e.target.value)} />
         <Show when={data.loading}>
           <span class="text-gray-400 text-sm">Loading...</span>
@@ -195,7 +195,7 @@ export default function Appointments(props) {
                 <th class="px-3 py-2 text-left text-gray-400 font-medium text-xs border-r border-gray-700 w-16 sticky left-0 bg-gray-900 z-10">
                   Time
                 </th>
-                <For each={weekDates()}>
+                <For each={datesInterval()}>
                   {(date) => {
                     const allSelected = () => HOURS.every(h => availabilityMap()[date]?.[props.currentUser?.id]?.[h])
                     return (
@@ -220,7 +220,7 @@ export default function Appointments(props) {
               {/* Member sub-header row */}
               <tr class="bg-gray-800 border-b border-gray-700">
                 <th class=" border-r border-gray-700 w-16 sticky left-0 bg-gray-800 z-10" />
-                <For each={weekDates()}>
+                <For each={datesInterval()}>
                   {(date) => (
                     <>
                       <For each={members()}>
@@ -250,7 +250,7 @@ export default function Appointments(props) {
                       {String(hour).padStart(2, '0')}:00
                     </td>
 
-                    <For each={weekDates()}>
+                    <For each={datesInterval()}>
                       {(date) => {
                         const booked = () => appointmentsMap()[date]?.[hour]
                         const isToday = date === todayStr()
